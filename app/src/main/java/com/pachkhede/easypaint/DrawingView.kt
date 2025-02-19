@@ -1,6 +1,5 @@
 package com.pachkhede.easypaint
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -10,8 +9,13 @@ import android.graphics.Path
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.widget.ImageView
+import android.widget.LinearLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
+
+
 
     private val paths = mutableListOf<Pair<Path, Paint>>()
     private var currentPath = Path()
@@ -19,6 +23,10 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     private var canvasBitmap: Bitmap? = null
     private var drawCanvas: Canvas? = null
+    private var isEraser = false
+
+    private var prevColor : Int = Color.BLACK
+
 
 
     init {
@@ -63,6 +71,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             }
             MotionEvent.ACTION_MOVE -> {
                 currentPath.lineTo(touchX!!, touchY!!)
+
             }
             MotionEvent.ACTION_UP -> {
                 paths.add(Pair(currentPath, currentPaint))
@@ -75,25 +84,36 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     fun changeBrushColor(color: Int) {
-        currentPaint.color = color
+        currentPaint = Paint(currentPaint).apply {
+            this.color = color
+        }
     }
 
     fun changeBrushSize(size: Float) {
-        currentPaint.strokeWidth = size
+        currentPaint = Paint(currentPaint).apply {
+            strokeWidth = size
+        }
+
     }
 
     fun changeBrushStyle(style: Paint.Style) {
-        currentPaint.style = style
+        currentPaint = Paint(currentPaint).apply {
+            this.style = style
+        }
     }
 
 
     fun changeStrokeJoin(join: Paint.Join) {
-        currentPaint.strokeJoin = join
+        currentPaint = Paint(currentPaint).apply {
+            this.strokeJoin = join
+        }
     }
 
 
     fun changeStrokeCap(cap: Paint.Cap) {
-        currentPaint.strokeCap = cap
+        currentPaint = Paint(currentPaint).apply {
+            this.strokeCap = cap
+        }
     }
 
     fun clearCanvas() {
@@ -108,7 +128,25 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         }
     }
 
+    fun useEraser() {
+        isEraser = true
+        prevColor = currentPaint.color
+        changeBrushColor(Color.WHITE)
 
+    }
+
+    fun usePen() {
+        isEraser = false
+        changeBrushColor(prevColor)
+
+    }
+
+    fun getBitmap() : Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        draw(canvas)
+        return bitmap
+    }
 
 
 }

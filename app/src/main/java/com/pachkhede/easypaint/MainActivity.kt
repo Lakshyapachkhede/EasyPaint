@@ -1,16 +1,53 @@
 package com.pachkhede.easypaint
 
+
+import android.annotation.SuppressLint
+import android.content.res.ColorStateList
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever.BitmapParams
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.view.MotionEvent
+import android.view.View
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.Button
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.skydoves.colorpickerview.ColorEnvelope
+import com.skydoves.colorpickerview.ColorPickerDialog
+import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import kotlin.math.abs
+import android.Manifest
+import android.content.ContentValues
+import android.content.pm.PackageManager
+import android.provider.MediaStore
+
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var drawingView: DrawingView
+    private lateinit var sideMenu: LinearLayout
+    private lateinit var thicknessSeekBar: SeekBar
+    private lateinit var colorIndicator: View
+    private lateinit var mainView: ConstraintLayout
+    private lateinit var imgView: ImageView
+    private var img: Int = R.drawable.pen
 
+
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -21,13 +58,179 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+
         drawingView = findViewById(R.id.drawingView)
+        sideMenu = findViewById(R.id.sideMenu)
+        thicknessSeekBar = findViewById(R.id.thicknessSeekBar)
+        colorIndicator = findViewById(R.id.colorIndicator)
+        mainView = findViewById<ConstraintLayout>(R.id.main)
+        imgView = ImageView(this)
+
+        thicknessSeekBarSetup()
+
+        findViewById<LinearLayout>(R.id.menuBtn).setOnClickListener {
+            toggleMenu()
+        }
+
+        findViewById<ImageView>(R.id.pen).setOnClickListener {
+            img = R.drawable.pen
+            drawingView.usePen()
+        }
+
+        findViewById<ImageView>(R.id.eraser).setOnClickListener {
+            img = R.drawable.eraser
+            drawingView.useEraser()
+        }
+
+        findViewById<ImageView>(R.id.clear).setOnClickListener {
+            drawingView.clearCanvas()
+        }
+
+        findViewById<ImageView>(R.id.save).setOnClickListener {
+            saveDrawing()
+        }
+
+        drawingView.setOnTouchListener { _, event ->
+
+            if (event.action == MotionEvent.ACTION_MOVE) {
+                showImageAtTouch(event.x, event.y, img)
+            }
+
+            false
+        }
 
 
+        colorIndicator.setOnClickListener {
+            openColorPicker()
+        }
 
+    }
+
+    private fun toggleMenu() {
+        if (sideMenu.visibility == View.GONE) {
+            val animation: Animation =
+                AnimationUtils.loadAnimation(baseContext, R.anim.side_menu_open)
+            sideMenu.visibility = View.VISIBLE
+            sideMenu.startAnimation(animation)
+
+        } else {
+            val animation: Animation =
+                AnimationUtils.loadAnimation(baseContext, R.anim.side_menu_close)
+            sideMenu.visibility = View.GONE
+            sideMenu.startAnimation(animation)
+        }
+    }
+
+    private fun thicknessSeekBarSetup() {
+        thicknessSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+
+            }
+
+            override fun onStartTrackingTouch(p0: SeekBar?) {
+
+            }
+
+            override fun onStopTrackingTouch(p0: SeekBar?) {
+                drawingView.changeBrushSize(thicknessSeekBar.progress.toFloat())
+            }
+
+        })
+    }
+
+    private fun openColorPicker() {
+        ColorPickerDialog.Builder(this)
+            .setTitle("Select Color")
+            .setPreferenceName("MyColorPickerDialog")
+            .setPositiveButton("Select", object : ColorEnvelopeListener {
+                override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {
+                    drawingView.changeBrushColor(envelope?.color!!)
+
+                    colorIndicator.backgroundTintList = ColorStateList.valueOf(envelope.color)
+
+                }
+            })
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .attachAlphaSlideBar(true)
+            .attachBrightnessSlideBar(true)
+            .setBottomSpace(12)
+            .show()
+    }
+
+
+    private fun showImageAtTouch(x: Float, y: Float, img: Int) {
+
+        mainView.removeView(imgView)
+
+        imgView.setImageResource(img)
+        imgView.layoutParams = LinearLayout.LayoutParams(100, 100)
+        imgView.visibility = View.VISIBLE
+        imgView.x = x
+        imgView.y = y
+
+        mainView.addView(imgView)
 
 
     }
 
+    private fun saveDrawing() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            // Check if permission is granted
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 100)
+                return  // Stop execution until the user grants permission
+            }
+        }
 
+        val drawingView = findViewById<DrawingView>(R.id.drawingView)
+        val bitmap = drawingView.getBitmap()
+        val filename = "EasyPaint_${System.currentTimeMillis()}.png"
+
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES) // Saves to Pictures folder
+        }
+
+        val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+        uri?.let {
+            try {
+                contentResolver.openOutputStream(it)?.use { outputStream ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                    Toast.makeText(this, "Drawing saved to Gallery", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                Toast.makeText(this, "Failed to save drawing", Toast.LENGTH_SHORT).show()
+            }
+        } ?: run {
+            Toast.makeText(this, "Failed to save drawing", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+
+
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 100) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                saveDrawing()
+            } else {
+                Toast.makeText(this, "Storage permission denied!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 }
+
+
+
+
+
