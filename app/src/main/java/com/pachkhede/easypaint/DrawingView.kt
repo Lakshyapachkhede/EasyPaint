@@ -6,76 +6,102 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Point
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import android.widget.ImageView
-import android.widget.LinearLayout
-import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.annotation.ColorRes
+import androidx.core.graphics.get
+import com.google.android.material.internal.TouchObserverFrameLayout
+import java.util.LinkedList
+import java.util.Queue
+import java.util.Stack
 
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
+    enum class Tools {
+        SOLID_BRUSH, CALLIGRAPHY_BRUSH, SPRAY_BRUSH, BLUR_BRUSH, EMBOSS_BRUSH, DOTTED_BRUSH, NEON_BRUSH, PATTERN_BRUSH,
+        ERASER, FILL, TEXT,
+        LINE, RECTANGLE, CIRCLE, SQUARE, TRIANGLE, OVAL
+    }
 
 
-    private val paths = mutableListOf<Pair<Path, Paint>>()
-    private var currentPath = Path()
-    private var currentPaint = Paint()
-
-    private var canvasBitmap: Bitmap? = null
-    private var drawCanvas: Canvas? = null
-    private var isEraser = false
-
-    private var prevColor : Int = Color.BLACK
-
-
+    private var path = Path()
+    private var paint = Paint()
+    private val bitmapStack = Stack<Bitmap>()
+    private val redoBitmapStack = Stack<Bitmap>()
+    private var bitmap: Bitmap? = null
+    private var canvas: Canvas? = null
+    var tool: Tools = Tools.SOLID_BRUSH
+    private var currColor: Int = Color.BLACK
+    private var currStrokeWidth: Float = 8f
+    private var prevColor: Int = Color.WHITE
+    private var backColor: Int = Color.WHITE
+    private var x1: Float = 0f
+    private var x2: Float = 0f
 
     init {
-        setupPaint()
+        changeTool(Tools.SOLID_BRUSH)
     }
 
-    private fun setupPaint() {
-        currentPaint = Paint().apply {
-            color = Color.BLACK
-            strokeWidth = 10f
-            style = Paint.Style.STROKE
-            strokeJoin = Paint.Join.ROUND
-            strokeCap = Paint.Cap.ROUND
-            isAntiAlias = true
-        }
-    }
-
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        drawCanvas = Canvas(canvasBitmap!!)
+    private fun initBitmap() {
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        canvas = Canvas(bitmap!!)
+        bitmapStack.push(bitmap!!.copy(Bitmap.Config.ARGB_8888, true))
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        for ((path, paint) in paths) {
-            canvas.drawPath(path, paint)
+        bitmap?.let {
+            canvas.drawBitmap(it, 0f, 0f, null)
         }
 
-        canvas.drawPath(currentPath, currentPaint)
+        canvas.drawPath(path, paint)
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        initBitmap()
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        val touchX = event?.x
-        val touchY = event?.y
+        val touchX = event?.x ?: return false
+        val touchY = event.y ?: return false
 
-        when (event?.action) {
+        when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                currentPath = Path().apply { moveTo(touchX!!, touchY!!) }
-                currentPaint = Paint(currentPaint)
+                when (tool) {
+                    Tools.SOLID_BRUSH, Tools.ERASER -> {
+                        path = Path().apply { moveTo(touchX, touchY) }
+                        paint = Paint(paint)
+                    }
+
+                    Tools.FILL -> {
+                        floodFill(touchX.toInt(), touchY.toInt(), bitmap!!.getPixel(touchX.toInt(), touchY.toInt()), paint.color)
+                        pushBitmap()
+
+                    }
+
+                    else -> {}
+                }
             }
+
             MotionEvent.ACTION_MOVE -> {
-                currentPath.lineTo(touchX!!, touchY!!)
+                if (tool == Tools.SOLID_BRUSH || tool == Tools.ERASER) {
+                    path.lineTo(touchX, touchY)
+                }
 
             }
+
             MotionEvent.ACTION_UP -> {
-                paths.add(Pair(currentPath, currentPaint))
-                currentPath = Path()
+                if (tool == Tools.SOLID_BRUSH || tool == Tools.ERASER) {
+
+                    canvas?.drawPath(path, paint)
+
+                    pushBitmap()
+                    path.reset()
+                }
             }
 
         }
@@ -83,70 +109,158 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         return true
     }
 
-    fun changeBrushColor(color: Int) {
-        currentPaint = Paint(currentPaint).apply {
-            this.color = color
+    private fun pushBitmap() {
+        bitmapStack.push(bitmap!!.copy(Bitmap.Config.ARGB_8888, true))
+        refresh()
+    }
+
+    fun changeTool(newTool: Tools) {
+        tool = newTool
+        when (newTool) {
+            Tools.SOLID_BRUSH -> changeBrushToSolid()
+
+
+            Tools.ERASER -> useEraser()
+
+            else -> {}
+
+        }
+
+
+    }
+
+    private fun changeBrushToSolid(color: Int? = null) {
+        paint = Paint().apply {
+            this.color = color ?: currColor
+            strokeWidth = currStrokeWidth
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+            isAntiAlias = true
+        }
+    }
+
+
+    private fun useEraser() {
+        paint = Paint().apply {
+            color = backColor
+            strokeWidth = currStrokeWidth
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+            isAntiAlias = true
+        }
+    }
+
+    fun changeColor(color: Int) {
+        if (tool != Tools.ERASER) {
+            prevColor = currColor
+            currColor = color
+            paint.color = color
         }
     }
 
     fun changeBrushSize(size: Float) {
-        currentPaint = Paint(currentPaint).apply {
-            strokeWidth = size
-        }
-
-    }
-
-    fun changeBrushStyle(style: Paint.Style) {
-        currentPaint = Paint(currentPaint).apply {
-            this.style = style
-        }
-    }
-
-
-    fun changeStrokeJoin(join: Paint.Join) {
-        currentPaint = Paint(currentPaint).apply {
-            this.strokeJoin = join
-        }
-    }
-
-
-    fun changeStrokeCap(cap: Paint.Cap) {
-        currentPaint = Paint(currentPaint).apply {
-            this.strokeCap = cap
-        }
+        currStrokeWidth = size
+        paint.strokeWidth = size
     }
 
     fun clearCanvas() {
-        paths.clear()
-        invalidate()
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        canvas = Canvas(bitmap!!)
+        canvas!!.drawColor(backColor)
+        bitmapStack.clear()
+        redoBitmapStack.clear()
+        path.reset()
+        pushBitmap()
     }
 
     fun undo() {
-        if (paths.isNotEmpty()) {
-            paths.removeLast()
-            invalidate()
+        if (bitmapStack.size > 1) {
+            redoBitmapStack.push(bitmapStack.pop())
+        }
+        refresh()
+    }
+
+
+    fun redo() {
+        if (redoBitmapStack.isNotEmpty()) {
+            bitmapStack.push(redoBitmapStack.pop())
+            refresh()
+
         }
     }
 
-    fun useEraser() {
-        isEraser = true
-        prevColor = currentPaint.color
-        changeBrushColor(Color.WHITE)
-
+    private fun refresh() {
+        bitmap = bitmapStack.peek().copy(Bitmap.Config.ARGB_8888, true)
+        canvas = Canvas(bitmap!!)
+        invalidate()
     }
 
-    fun usePen() {
-        isEraser = false
-        changeBrushColor(prevColor)
-
-    }
-
-    fun getBitmap() : Bitmap {
+    fun getBitmap(): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         draw(canvas)
         return bitmap
     }
 
+    fun changeBackColor(color: Int) {
+        backColor = color
+        clearCanvas()
+    }
 
+    private fun floodFill(x: Int, y: Int, targetColor: Int, replacementColor: Int) {
+        if (targetColor == replacementColor) return
+
+        val width = bitmap!!.width
+        val height = bitmap!!.height
+        val queue: Queue<Point> = LinkedList()
+
+        queue.add(Point(x, y))
+
+        // Create a new path to represent the flood fill
+        val fillPath = Path()
+
+        while (queue.isNotEmpty()) {
+            val node = queue.poll()
+            var px = node.x
+            var py = node.y
+
+            // Move left until a different color is found
+            while (px > 0 && bitmap?.getPixel(px - 1, py) == targetColor) {
+                px--
+            }
+
+            var spanUp = false
+            var spanDown = false
+
+            // Move right, filling pixels and checking for spans
+            while (px < width && bitmap?.getPixel(px, py) == targetColor) {
+                bitmap!!.setPixel(px, py, replacementColor)
+
+                // Add the filled pixel to the fillPath
+
+                // Check for a span above
+                if (!spanUp && py > 0 && bitmap!!.getPixel(px, py - 1) == targetColor) {
+                    queue.add(Point(px, py - 1))
+                    spanUp = true
+                } else if (spanUp && py > 0 && bitmap!!.getPixel(px, py - 1) != targetColor) {
+                    spanUp = false
+                }
+
+                // Check for a span below
+                if (!spanDown && py < height - 1 && bitmap!!.getPixel(px, py + 1) == targetColor) {
+                    queue.add(Point(px, py + 1))
+                    spanDown = true
+                } else if (spanDown && py < height - 1 && bitmap!!.getPixel(px, py + 1) != targetColor) {
+                    spanDown = false
+                }
+
+                px++
+            }
+        }
+
+        // Redraw the canvas
+        invalidate()
+    }
 }

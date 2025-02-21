@@ -34,14 +34,18 @@ import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.provider.MediaStore
+import android.widget.ScrollView
+import android.widget.TextView
+import org.w3c.dom.Text
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var drawingView: DrawingView
-    private lateinit var sideMenu: LinearLayout
+    private lateinit var sideMenu: ScrollView
     private lateinit var thicknessSeekBar: SeekBar
     private lateinit var colorIndicator: View
+    private lateinit var backColorIndicator : View
     private lateinit var mainView: ConstraintLayout
     private lateinit var imgView: ImageView
     private var img: Int = R.drawable.pen
@@ -63,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         sideMenu = findViewById(R.id.sideMenu)
         thicknessSeekBar = findViewById(R.id.thicknessSeekBar)
         colorIndicator = findViewById(R.id.colorIndicator)
+        backColorIndicator = findViewById(R.id.backColorIndicator)
         mainView = findViewById<ConstraintLayout>(R.id.main)
         imgView = ImageView(this)
 
@@ -74,12 +79,20 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<ImageView>(R.id.pen).setOnClickListener {
             img = R.drawable.pen
-            drawingView.usePen()
+            imgView.setImageResource(img)
+            drawingView.changeTool(DrawingView.Tools.SOLID_BRUSH)
         }
 
         findViewById<ImageView>(R.id.eraser).setOnClickListener {
             img = R.drawable.eraser
-            drawingView.useEraser()
+            imgView.setImageResource(img)
+            drawingView.changeTool(DrawingView.Tools.ERASER)
+        }
+
+        findViewById<ImageView>(R.id.bucket).setOnClickListener {
+            img = R.drawable.bucket
+            imgView.setImageResource(img)
+            drawingView.changeTool(DrawingView.Tools.FILL)
         }
 
         findViewById<ImageView>(R.id.clear).setOnClickListener {
@@ -101,8 +114,20 @@ class MainActivity : AppCompatActivity() {
 
 
         colorIndicator.setOnClickListener {
-            openColorPicker()
+            openColorPicker(false)
         }
+
+        backColorIndicator.setOnClickListener {
+            openColorPicker(true)
+        }
+
+        findViewById<LinearLayout>(R.id.undo).setOnClickListener {
+            drawingView.undo()
+        }
+        findViewById<LinearLayout>(R.id.redo).setOnClickListener {
+            drawingView.redo()
+        }
+
 
     }
 
@@ -124,7 +149,7 @@ class MainActivity : AppCompatActivity() {
     private fun thicknessSeekBarSetup() {
         thicknessSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-
+                findViewById<TextView>(R.id.seekBarIndicator).text = p1.toString()
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
@@ -138,16 +163,23 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun openColorPicker() {
+    private fun openColorPicker(isBackground: Boolean) {
+        val title = if (isBackground) "Select Background Color" else "Select Color"
+
         ColorPickerDialog.Builder(this)
-            .setTitle("Select Color")
+            .setTitle(title)
             .setPreferenceName("MyColorPickerDialog")
             .setPositiveButton("Select", object : ColorEnvelopeListener {
                 override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {
-                    drawingView.changeBrushColor(envelope?.color!!)
-
-                    colorIndicator.backgroundTintList = ColorStateList.valueOf(envelope.color)
-
+                    envelope?.color?.let { selectedColor ->
+                        if (isBackground) {
+                            drawingView.changeBackColor(selectedColor)
+                            backColorIndicator.backgroundTintList = ColorStateList.valueOf(selectedColor)
+                        } else {
+                            drawingView.changeColor(selectedColor)
+                            colorIndicator.backgroundTintList = ColorStateList.valueOf(selectedColor)
+                        }
+                    }
                 }
             })
             .setNegativeButton("Cancel") { dialog, _ ->
@@ -158,6 +190,7 @@ class MainActivity : AppCompatActivity() {
             .setBottomSpace(12)
             .show()
     }
+
 
 
     private fun showImageAtTouch(x: Float, y: Float, img: Int) {
@@ -228,6 +261,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+
+
 }
 
 
