@@ -17,7 +17,9 @@ import java.util.LinkedList
 import java.util.Queue
 import java.util.Stack
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
@@ -25,7 +27,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     enum class Tools {
         SOLID_BRUSH, CALLIGRAPHY_BRUSH, SPRAY_BRUSH, BLUR_BRUSH, EMBOSS_BRUSH, DOTTED_BRUSH, NEON_BRUSH, PATTERN_BRUSH,
         ERASER, FILL, TEXT,
-        LINE, CIRCLE, SQUARE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING
+        LINE, CIRCLE, SQUARE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING, PENCIL
     }
 
 
@@ -38,7 +40,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     var tool: Tools = Tools.SOLID_BRUSH
     private var currColor: Int = Color.BLACK
     private var currStrokeWidth: Float = 8f
-//    private var prevColor: Int = Color.BLACK
+
+    //    private var prevColor: Int = Color.BLACK
     private var backColor: Int = Color.WHITE
     private var x1: Float = 0f
     private var y1: Float = 0f
@@ -98,7 +101,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     fun changeTool(newTool: Tools) {
-        if (tool == Tools.ERASER && newTool != Tools.ERASER){
+        if (tool == Tools.ERASER && newTool != Tools.ERASER) {
             tool = newTool
             changeColor(currColor)
 
@@ -272,9 +275,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
             }
 
-            Tools.LINE, Tools.CIRCLE, Tools.RECTANGLE, Tools.SQUARE, Tools.RECTANGLE_ROUND, Tools.TRIANGLE, Tools.RIGHT_TRIANGLE, Tools.DIAMOND -> {
+            Tools.LINE, Tools.CIRCLE, Tools.RECTANGLE, Tools.SQUARE, Tools.RECTANGLE_ROUND, Tools.TRIANGLE, Tools.RIGHT_TRIANGLE, Tools.DIAMOND, Tools.PENTAGON, Tools.HEXAGON, Tools.ARROW_MARK, Tools.ARROW, Tools.PENCIL, Tools.STAR_FOUR -> {
                 x1 = touchX
-                y1= touchY
+                y1 = touchY
                 path.reset()
                 path.moveTo(x1, y1)
             }
@@ -298,7 +301,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
             Tools.CIRCLE -> {
                 path.reset()
-                val radius = sqrt(((touchX - x1).pow(2) + (touchY - y1).pow(2)).toDouble()).toFloat()
+                val radius =
+                    sqrt(((touchX - x1).pow(2) + (touchY - y1).pow(2)).toDouble()).toFloat()
                 path.addCircle(x1, y1, radius, Path.Direction.CW)
             }
 
@@ -371,6 +375,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 path.close()
 
             }
+
             Tools.RIGHT_TRIANGLE -> {
 
                 path.reset()
@@ -403,6 +408,156 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
             }
 
+            Tools.PENTAGON -> {
+                val coordinates: List<Pair<Float, Float>> = calculatePentagonPoints(
+                    x1,
+                    y1,
+                    sqrt(((touchX - x1).pow(2) + (touchY - y1).pow(2)).toDouble()).toFloat()
+                )
+                path.reset()
+                path.moveTo(coordinates[0].first, coordinates[0].second)
+                for (coordinate in coordinates) {
+                    path.lineTo(coordinate.first, coordinate.second)
+                }
+                path.close()
+            }
+
+            Tools.HEXAGON -> {
+                val coordinates: List<Pair<Float, Float>> = calculateHexagonPoints(
+                    x1,
+                    y1,
+                    sqrt(((touchX - x1).pow(2) + (touchY - y1).pow(2)).toDouble()).toFloat()
+                )
+                path.reset()
+                path.moveTo(coordinates[0].first, coordinates[0].second)
+                for (coordinate in coordinates) {
+                    path.lineTo(coordinate.first, coordinate.second)
+                }
+                path.close()
+            }
+
+            Tools.ARROW_MARK -> {
+                path.reset()
+
+                // Draw main arrow line
+                path.moveTo(x1, y1)
+                path.lineTo(touchX, touchY)
+
+                // Arrow mark size
+                val markSize = 30f
+
+                // Calculate direction vector
+                val dx = touchX - x1
+                val dy = touchY - y1
+                val length = sqrt(dx * dx + dy * dy)
+                val unitX = dx / length
+                val unitY = dy / length
+
+                // Calculate arrow mark points (small lines at arrow tip)
+                val markX1 = touchX - markSize * unitX + markSize * unitY
+                val markY1 = touchY - markSize * unitY - markSize * unitX
+
+                val markX2 = touchX - markSize * unitX - markSize * unitY
+                val markY2 = touchY - markSize * unitY + markSize * unitX
+
+                // Draw two short diagonal lines forming "→" at the arrow tip
+                path.moveTo(touchX, touchY)
+                path.lineTo(markX1, markY1)
+
+                path.moveTo(touchX, touchY)
+                path.lineTo(markX2, markY2)
+            }
+
+            Tools.PENCIL -> {
+
+                path.reset()
+
+                // Define arrow dimensions
+                val shaftWidth = 30f  // Width of the arrow shaft
+                val arrowHeadSize = 60f  // Size of the arrowhead
+                val tailWidth = 50f  // Width of the tail
+                val tailHeight = 40f  // Height of the tail
+
+                // Calculate direction vector
+                val dx = touchX - x1
+                val dy = touchY - y1
+                val length = sqrt(dx * dx + dy * dy)
+                val unitX = dx / length
+                val unitY = dy / length
+
+                // Perpendicular vector for width calculations
+                val perpX = -unitY * shaftWidth / 2
+                val perpY = unitX * shaftWidth / 2
+
+                // Arrowhead points
+                val tipX = touchX
+                val tipY = touchY
+                val leftHeadX = touchX - arrowHeadSize * unitX + perpX
+                val leftHeadY = touchY - arrowHeadSize * unitY + perpY
+                val rightHeadX = touchX - arrowHeadSize * unitX - perpX
+                val rightHeadY = touchY - arrowHeadSize * unitY - perpY
+
+                // Shaft points
+                val leftShaftX = x1 + perpX
+                val leftShaftY = y1 + perpY
+                val rightShaftX = x1 - perpX
+                val rightShaftY = y1 - perpY
+
+                // Tail points
+                val tailLeftX = x1 + perpX - tailWidth * unitX
+                val tailLeftY = y1 + perpY - tailWidth * unitY
+                val tailRightX = x1 - perpX - tailWidth * unitX
+                val tailRightY = y1 - perpY - tailWidth * unitY
+
+                // Draw the outlined arrow shape
+                path.moveTo(tipX, tipY)  // Move to arrow tip
+                path.lineTo(leftHeadX, leftHeadY)  // Left side of arrowhead
+                path.lineTo(leftShaftX, leftShaftY)  // Left side of shaft
+                path.lineTo(tailLeftX, tailLeftY)  // Left side of tail
+                path.lineTo(tailRightX, tailRightY)  // Right side of tail
+                path.lineTo(rightShaftX, rightShaftY)  // Right side of shaft
+                path.lineTo(rightHeadX, rightHeadY)  // Right side of arrowhead
+                path.lineTo(tipX, tipY)  // Close the path
+
+                path.close()  // Close the arrow outline
+
+
+            }
+
+            Tools.ARROW -> {}
+
+            Tools.STAR_FOUR -> {
+
+
+                path.reset()
+
+                // Calculate center of the star
+                val cx = (x1 + touchX) / 2
+                val cy = (y1 + touchY) / 2
+
+                // Compute outer radius (distance from center to touch point)
+                val R_outer = sqrt((touchX - cx).pow(2) + (touchY - cy).pow(2))
+
+                // Compute inner radius (adjustable, generally half of outer radius)
+                val R_inner = R_outer * 0.5f  // You can tweak this ratio
+
+                // Define angles for 4-point star (outer & inner points alternating)
+                val angles = arrayOf(0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0)
+
+                for (i in angles.indices) {
+                    val angleRad = Math.toRadians(angles[i]) // Convert to radians
+                    val radius = if (i % 2 == 0) R_outer else R_inner // Alternate radius
+
+                    val x = cx + (radius * cos(angleRad)).toFloat()
+                    val y = cy + (radius * sin(angleRad)).toFloat()
+
+                    if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                }
+
+                path.close() // Close the star shape
+
+
+            }
 
             else -> {}
         }
@@ -419,7 +574,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 canvas?.drawLine(x1, y1, touchX, touchY, paint)
             }
 
-            Tools.CIRCLE, Tools.RECTANGLE, Tools.SQUARE, Tools.RECTANGLE_ROUND, Tools.TRIANGLE, Tools.RIGHT_TRIANGLE,Tools.DIAMOND  -> {
+            Tools.CIRCLE, Tools.RECTANGLE, Tools.SQUARE, Tools.RECTANGLE_ROUND, Tools.TRIANGLE, Tools.RIGHT_TRIANGLE, Tools.DIAMOND, Tools.PENTAGON, Tools.HEXAGON, Tools.ARROW_MARK, Tools.ARROW, Tools.PENCIL, Tools.STAR_FOUR -> {
                 canvas?.drawPath(path, paint)
             }
 
@@ -432,5 +587,32 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         pushBitmap()
         path.reset()
     }
+
+    private fun calculatePentagonPoints(cx: Float, cy: Float, R: Float): List<Pair<Float, Float>> {
+        val points = mutableListOf<Pair<Float, Float>>()
+        val angleOffset = Math.PI / 2  // Rotates so the top vertex is centered
+
+        for (i in 0 until 5) {
+            val angle = (2 * Math.PI * i / 5) - angleOffset
+            val x = cx + R * cos(angle).toFloat()
+            val y = cy + R * sin(angle).toFloat()
+            points.add(Pair(x, y))
+        }
+        return points
+    }
+
+    fun calculateHexagonPoints(cx: Float, cy: Float, R: Float): List<Pair<Float, Float>> {
+        val points = mutableListOf<Pair<Float, Float>>()
+        val angleOffset = Math.PI / 6  // Rotates so the flat sides are aligned properly
+
+        for (i in 0 until 6) {
+            val angle = (2 * Math.PI * i / 6) - angleOffset
+            val x = cx + R * cos(angle).toFloat()
+            val y = cy + R * sin(angle).toFloat()
+            points.add(Pair(x, y))
+        }
+        return points
+    }
+
 
 }
