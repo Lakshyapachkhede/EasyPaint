@@ -22,7 +22,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     enum class Tools {
         SOLID_BRUSH, CALLIGRAPHY_BRUSH, SPRAY_BRUSH, BLUR_BRUSH, EMBOSS_BRUSH, DOTTED_BRUSH, NEON_BRUSH, PATTERN_BRUSH,
         ERASER, FILL, TEXT,
-        LINE, RECTANGLE, CIRCLE, SQUARE, TRIANGLE, OVAL
+        LINE, CIRCLE, SQUARE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING
     }
 
 
@@ -35,10 +35,10 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     var tool: Tools = Tools.SOLID_BRUSH
     private var currColor: Int = Color.BLACK
     private var currStrokeWidth: Float = 8f
-    private var prevColor: Int = Color.WHITE
+    private var prevColor: Int = Color.BLACK
     private var backColor: Int = Color.WHITE
     private var x1: Float = 0f
-    private var x2: Float = 0f
+    private var y1: Float = 0f
 
     init {
         changeTool(Tools.SOLID_BRUSH)
@@ -71,37 +71,17 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                when (tool) {
-                    Tools.SOLID_BRUSH, Tools.ERASER -> {
-                        path = Path().apply { moveTo(touchX, touchY) }
-                        paint = Paint(paint)
-                    }
-
-                    Tools.FILL -> {
-                        floodFill(touchX.toInt(), touchY.toInt(), bitmap!!.getPixel(touchX.toInt(), touchY.toInt()), paint.color)
-                        pushBitmap()
-
-                    }
-
-                    else -> {}
-                }
+                touchDown(touchX, touchY)
             }
 
             MotionEvent.ACTION_MOVE -> {
-                if (tool == Tools.SOLID_BRUSH || tool == Tools.ERASER) {
-                    path.lineTo(touchX, touchY)
-                }
-
+                touchMove(touchX, touchY)
             }
 
             MotionEvent.ACTION_UP -> {
-                if (tool == Tools.SOLID_BRUSH || tool == Tools.ERASER) {
+                touchUp(touchX, touchY)
 
-                    canvas?.drawPath(path, paint)
 
-                    pushBitmap()
-                    path.reset()
-                }
             }
 
         }
@@ -115,11 +95,15 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     fun changeTool(newTool: Tools) {
+        if (tool == Tools.ERASER && newTool != Tools.ERASER){
+            tool = newTool
+            changeColor(prevColor)
+
+        }
         tool = newTool
+
         when (newTool) {
             Tools.SOLID_BRUSH -> changeBrushToSolid()
-
-
             Tools.ERASER -> useEraser()
 
             else -> {}
@@ -252,7 +236,11 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 if (!spanDown && py < height - 1 && bitmap!!.getPixel(px, py + 1) == targetColor) {
                     queue.add(Point(px, py + 1))
                     spanDown = true
-                } else if (spanDown && py < height - 1 && bitmap!!.getPixel(px, py + 1) != targetColor) {
+                } else if (spanDown && py < height - 1 && bitmap!!.getPixel(
+                        px,
+                        py + 1
+                    ) != targetColor
+                ) {
                     spanDown = false
                 }
 
@@ -263,4 +251,76 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         // Redraw the canvas
         invalidate()
     }
+
+    private fun touchDown(touchX: Float, touchY: Float) {
+        when (tool) {
+            Tools.SOLID_BRUSH, Tools.ERASER -> {
+                path = Path().apply { moveTo(touchX, touchY) }
+                paint = Paint(paint)
+            }
+
+            Tools.FILL -> {
+                floodFill(
+                    touchX.toInt(),
+                    touchY.toInt(),
+                    bitmap!!.getPixel(touchX.toInt(), touchY.toInt()),
+                    paint.color
+                )
+                pushBitmap()
+
+            }
+
+            Tools.LINE -> {
+                x1 = touchX
+                y1 = touchY
+                path.reset()
+                path.moveTo(x1, y1)
+            }
+
+            Tools.CIRCLE -> {
+                
+            }
+
+
+            else -> {}
+        }
+    }
+
+    private fun touchMove(touchX: Float, touchY: Float) {
+        when (tool) {
+            Tools.SOLID_BRUSH, Tools.ERASER -> {
+                path.lineTo(touchX, touchY)
+            }
+
+            Tools.LINE -> {
+                path.reset()
+                path.moveTo(x1, y1)
+                path.lineTo(touchX, touchY)
+            }
+
+            else -> {}
+        }
+    }
+
+    private fun touchUp(touchX: Float, touchY: Float) {
+        when (tool) {
+            Tools.SOLID_BRUSH, Tools.ERASER -> {
+                canvas?.drawPath(path, paint)
+
+            }
+
+            Tools.LINE -> {
+                canvas?.drawLine(x1, y1, touchX, touchY, paint)
+            }
+
+            else -> {
+
+            }
+
+        }
+
+        pushBitmap()
+        path.reset()
+    }
+
 }

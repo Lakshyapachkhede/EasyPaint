@@ -45,10 +45,31 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sideMenu: ScrollView
     private lateinit var thicknessSeekBar: SeekBar
     private lateinit var colorIndicator: View
-    private lateinit var backColorIndicator : View
+    private lateinit var backColorIndicator: View
     private lateinit var mainView: ConstraintLayout
     private lateinit var imgView: ImageView
     private var img: Int = R.drawable.pen
+    val shapes = listOf(
+
+        Item("Line", R.drawable.line, DrawingView.Tools.LINE),
+        Item("Circle", R.drawable.circle, DrawingView.Tools.CIRCLE),
+        Item("Square", R.drawable.square, DrawingView.Tools.SQUARE),
+        Item("Rectangle", R.drawable.rectangle, DrawingView.Tools.RECTANGLE),
+        Item("RectangleRound", R.drawable.rectangle_rounded, DrawingView.Tools.RECTANGLE_ROUND),
+        Item("Triangle", R.drawable.triangle, DrawingView.Tools.TRIANGLE),
+        Item("RightTriangle", R.drawable.triangle_right, DrawingView.Tools.RIGHT_TRIANGLE),
+        Item("Diamond", R.drawable.diamond, DrawingView.Tools.DIAMOND),
+        Item("Pentagon", R.drawable.pentagon, DrawingView.Tools.PENTAGON),
+        Item("Hexagon", R.drawable.hexagon, DrawingView.Tools.HEXAGON),
+        Item("ArrowMark", R.drawable.arrow_mark, DrawingView.Tools.ARROW_MARK),
+        Item("ArrowOutline", R.drawable.arrow_outline, DrawingView.Tools.ARROW),
+        Item("StarFour", R.drawable.star_four, DrawingView.Tools.STAR_FOUR),
+        Item("StarFive", R.drawable.star, DrawingView.Tools.STAR_FIVE),
+        Item("StarSix", R.drawable.star2, DrawingView.Tools.STAR_SIX),
+        Item("Chat", R.drawable.chat, DrawingView.Tools.CHAT),
+        Item("Heart", R.drawable.heart, DrawingView.Tools.HEART),
+        Item("Lightning", R.drawable.lightning, DrawingView.Tools.LIGHTNING),
+    )
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -101,6 +122,17 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<ImageView>(R.id.save).setOnClickListener {
             saveDrawing()
+        }
+
+        findViewById<ImageView>(R.id.shapes).setOnClickListener {
+            val bottomSheet = ItemBottomSheet(shapes, "Select Shape") { selectedShape ->
+                Toast.makeText(this, "Selected: ${selectedShape.name}", Toast.LENGTH_SHORT).show()
+                drawingView.changeTool(selectedShape.tool)
+                img = R.drawable.pen
+                imgView.setImageResource(img)
+
+            }
+            bottomSheet.show(supportFragmentManager, "ShapesBottomSheet")
         }
 
         drawingView.setOnTouchListener { _, event ->
@@ -174,10 +206,12 @@ class MainActivity : AppCompatActivity() {
                     envelope?.color?.let { selectedColor ->
                         if (isBackground) {
                             drawingView.changeBackColor(selectedColor)
-                            backColorIndicator.backgroundTintList = ColorStateList.valueOf(selectedColor)
+                            backColorIndicator.backgroundTintList =
+                                ColorStateList.valueOf(selectedColor)
                         } else {
                             drawingView.changeColor(selectedColor)
-                            colorIndicator.backgroundTintList = ColorStateList.valueOf(selectedColor)
+                            colorIndicator.backgroundTintList =
+                                ColorStateList.valueOf(selectedColor)
                         }
                     }
                 }
@@ -190,7 +224,6 @@ class MainActivity : AppCompatActivity() {
             .setBottomSpace(12)
             .show()
     }
-
 
 
     private fun showImageAtTouch(x: Float, y: Float, img: Int) {
@@ -224,10 +257,14 @@ class MainActivity : AppCompatActivity() {
         val contentValues = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, filename)
             put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES) // Saves to Pictures folder
+            put(
+                MediaStore.Images.Media.RELATIVE_PATH,
+                Environment.DIRECTORY_PICTURES
+            ) // Saves to Pictures folder
         }
 
-        val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+        val uri =
+            contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         uri?.let {
             try {
                 contentResolver.openOutputStream(it)?.use { outputStream ->
@@ -244,9 +281,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
-
-
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -261,7 +295,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 
 
 }
