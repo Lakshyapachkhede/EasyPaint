@@ -16,6 +16,9 @@ import com.google.android.material.internal.TouchObserverFrameLayout
 import java.util.LinkedList
 import java.util.Queue
 import java.util.Stack
+import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
@@ -35,7 +38,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     var tool: Tools = Tools.SOLID_BRUSH
     private var currColor: Int = Color.BLACK
     private var currStrokeWidth: Float = 8f
-    private var prevColor: Int = Color.BLACK
+//    private var prevColor: Int = Color.BLACK
     private var backColor: Int = Color.WHITE
     private var x1: Float = 0f
     private var y1: Float = 0f
@@ -97,7 +100,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     fun changeTool(newTool: Tools) {
         if (tool == Tools.ERASER && newTool != Tools.ERASER){
             tool = newTool
-            changeColor(prevColor)
+            changeColor(currColor)
 
         }
         tool = newTool
@@ -138,7 +141,6 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     fun changeColor(color: Int) {
         if (tool != Tools.ERASER) {
-            prevColor = currColor
             currColor = color
             paint.color = color
         }
@@ -270,15 +272,11 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
             }
 
-            Tools.LINE -> {
+            Tools.LINE, Tools.CIRCLE, Tools.RECTANGLE, Tools.SQUARE, Tools.RECTANGLE_ROUND, Tools.TRIANGLE, Tools.RIGHT_TRIANGLE, Tools.DIAMOND -> {
                 x1 = touchX
-                y1 = touchY
+                y1= touchY
                 path.reset()
                 path.moveTo(x1, y1)
-            }
-
-            Tools.CIRCLE -> {
-                
             }
 
 
@@ -298,6 +296,114 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 path.lineTo(touchX, touchY)
             }
 
+            Tools.CIRCLE -> {
+                path.reset()
+                val radius = sqrt(((touchX - x1).pow(2) + (touchY - y1).pow(2)).toDouble()).toFloat()
+                path.addCircle(x1, y1, radius, Path.Direction.CW)
+            }
+
+            Tools.RECTANGLE -> {
+                path.reset()
+                path.moveTo(x1, y1)
+                path.lineTo(touchX, y1)
+                path.lineTo(touchX, touchY)
+                path.lineTo(x1, touchY)
+                path.close()
+
+            }
+
+            Tools.SQUARE -> {
+                val w = abs(touchX - x1)
+                val h = abs(touchY - y1)
+                val s = maxOf(w, h)
+
+                val newX1 = if (touchX < x1) x1 - s else x1
+                val newY1 = if (touchY < y1) y1 - s else y1
+
+                path.reset()
+                path.moveTo(newX1, newY1)
+                path.lineTo(newX1 + s, newY1)
+                path.lineTo(newX1 + s, newY1 + s)
+                path.lineTo(newX1, newY1 + s)
+                path.close()
+
+            }
+
+            Tools.RECTANGLE_ROUND -> {
+                val r = 50f
+                path.reset()
+
+
+                val rx = if (touchX < x1) -r else r
+                val ry = if (touchY < y1) -r else r
+
+                path.moveTo(x1 + rx, y1)
+
+
+                path.lineTo(touchX - rx, y1)
+                path.quadTo(touchX, y1, touchX, y1 + ry)
+
+
+                path.lineTo(touchX, touchY - ry)
+                path.quadTo(touchX, touchY, touchX - rx, touchY)
+
+
+                path.lineTo(x1 + rx, touchY)
+                path.quadTo(x1, touchY, x1, touchY - ry)
+
+
+                path.lineTo(x1, y1 + ry)
+                path.quadTo(x1, y1, x1 + rx, y1)
+
+                path.close()
+
+            }
+
+            Tools.TRIANGLE -> {
+
+                val x2 = (x1 + touchX) / 2 // Midpoint for the base
+                val y2 = y1 - abs(touchX - x1) * sqrt(3.0).toFloat() / 2 // Calculate height
+
+                path.reset()
+                path.moveTo(x1, y1)
+                path.lineTo(touchX, y1)
+                path.lineTo(x2, y2)
+                path.close()
+
+            }
+            Tools.RIGHT_TRIANGLE -> {
+
+                path.reset()
+                path.moveTo(x1, y1)
+                path.lineTo(touchX, touchY)
+                path.lineTo(x1, touchY)
+                path.close()
+
+            }
+
+            Tools.DIAMOND -> {
+
+                path.reset()
+
+                val cx = (x1 + touchX) / 2
+                val cy = (y1 + touchY) / 2
+
+                val left = Pair(x1, cy)
+                val top = Pair(cx, y1)
+                val right = Pair(touchX, cy)
+                val bottom = Pair(cx, touchY)
+
+
+                path.moveTo(left.first, left.second)
+                path.lineTo(top.first, top.second)
+                path.lineTo(right.first, right.second)
+                path.lineTo(bottom.first, bottom.second)
+                path.close()
+
+
+            }
+
+
             else -> {}
         }
     }
@@ -311,6 +417,10 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
             Tools.LINE -> {
                 canvas?.drawLine(x1, y1, touchX, touchY, paint)
+            }
+
+            Tools.CIRCLE, Tools.RECTANGLE, Tools.SQUARE, Tools.RECTANGLE_ROUND, Tools.TRIANGLE, Tools.RIGHT_TRIANGLE,Tools.DIAMOND  -> {
+                canvas?.drawPath(path, paint)
             }
 
             else -> {
