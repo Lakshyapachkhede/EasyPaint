@@ -11,7 +11,9 @@ import android.graphics.Point
 import android.util.AttributeSet
 import android.view.View
 import com.pachkhede.easypaint.DrawingView.Tools
+import kotlinx.coroutines.flow.emptyFlow
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.pow
@@ -76,6 +78,13 @@ class ShapeView @JvmOverloads constructor(
 
             Tools.DIAMOND -> drawDiamond()
 
+            Tools.PENTAGON -> drawPentagon()
+
+            Tools.ARROW_MARK -> drawArrowMark()
+
+            Tools.ARROW_DOUBLE -> drawArrowMarkDouble()
+
+            Tools.ARROW -> drawArrowOutline()
 
 
             else -> {
@@ -174,6 +183,148 @@ class ShapeView @JvmOverloads constructor(
         path.close()
 
     }
+
+    private fun drawPentagon() {
+
+        val cx = (x1 + x2 ) /2
+        val cy = (y1 + y2) /2
+
+
+        path.close()
+
+
+    }
+
+    private fun drawArrowMark() {
+        path.reset()
+
+        val arrowHeadLength = 30f  // Length of the arrowhead
+        val angle = Math.toRadians(45.0)  // Arrowhead angle (30°)
+
+        // Draw main arrow line
+        path.moveTo(x1, y1)
+        path.lineTo(x2, y2)
+
+        // Calculate direction of the arrow
+        val dx = x2 - x1
+        val dy = y2 - y1
+        val angleLine = atan2(dy.toDouble(), dx.toDouble())  // Angle of main line
+
+        // Compute arrowhead points
+        val xHead1 = x2 - arrowHeadLength * cos(angleLine - angle).toFloat()
+        val yHead1 = y2 - arrowHeadLength * sin(angleLine - angle).toFloat()
+
+        val xHead2 = x2 - arrowHeadLength * cos(angleLine + angle).toFloat()
+        val yHead2 = y2 - arrowHeadLength * sin(angleLine + angle).toFloat()
+
+        // Draw arrowhead
+        path.moveTo(x2, y2)
+        path.lineTo(xHead1, yHead1)
+        path.moveTo(x2, y2)
+        path.lineTo(xHead2, yHead2)
+    }
+
+    private fun drawArrowMarkDouble() {
+
+        path.reset()
+
+        val arrowHeadLength = 30f  // Length of the arrowhead
+        val angle = Math.toRadians(45.0)  // Arrowhead angle (30°)
+
+        // Draw main arrow line
+        path.moveTo(x1, y1)
+        path.lineTo(x2, y2)
+
+        // Calculate direction of the arrow
+        val dx = x2 - x1
+        val dy = y2 - y1
+        val angleLine = atan2(dy.toDouble(), dx.toDouble())  // Angle of main line
+
+        // Compute arrowhead points
+        val xHead1 = x2 - arrowHeadLength * cos(angleLine - angle).toFloat()
+        val yHead1 = y2 - arrowHeadLength * sin(angleLine - angle).toFloat()
+
+        val xHead2 = x2 - arrowHeadLength * cos(angleLine + angle).toFloat()
+        val yHead2 = y2 - arrowHeadLength * sin(angleLine + angle).toFloat()
+
+        // Draw arrowhead
+        path.moveTo(x2, y2)
+        path.lineTo(xHead1, yHead1)
+        path.moveTo(x2, y2)
+        path.lineTo(xHead2, yHead2)
+
+
+
+        // Compute arrowhead points
+        val xHead21 = x1 + arrowHeadLength * cos(angleLine - angle).toFloat()
+        val yHead21 = y1 + arrowHeadLength * sin(angleLine - angle).toFloat()
+
+        val xHead22 = x1 + arrowHeadLength * cos(angleLine + angle).toFloat()
+        val yHead22 = y1 + arrowHeadLength * sin(angleLine + angle).toFloat()
+
+        path.moveTo(x1, y1)
+        path.lineTo(xHead21, yHead21)
+        path.moveTo(x1, y1)
+        path.lineTo(xHead22, yHead22)
+
+    }
+
+    private fun drawArrowOutline() {
+
+        path.reset()
+        val cx = (x1 + x2 ) /2
+        val cy = (y1 + y2) /2
+
+        path.moveTo(x1, (y1 + cy )/2)
+        path.lineTo(x1, (y2 + cy )/2)
+
+        path.lineTo(cx, (y2 + cy )/2)
+
+        path.lineTo(cx, y2)
+        path.lineTo(x2, cy)
+
+        path.lineTo(cx, y1)
+        path.lineTo(cx, (y1 + cy) / 2)
+        path.lineTo(x1, (y1 + cy) / 2)
+
+        path.close()
+
+    }
+
+//    private fun drawStarFour() {
+//
+//        val cx = x1 + w / 2
+//        val cy = y1 + h / 2
+//
+//        val top = Pair(cx, y1)
+//        val bottom = Pair(cx, y2)
+//        val left = Pair(x1, cy)
+//        val right = Pair(x2, cy)
+//
+//        val inTopLeft = Pair(x1 + w / 4, y1 + h/4)
+//        val inTopRight = Pair(x1 + 3 * w / 4, y1 + h /4)
+//        val inBottomLeft = Pair(x1 + w/4, y1 + 3 * h / 4)
+//        val inBottomRight = Pair(x1 + 3 * w /4, y1 + 3 * h/4)
+//
+//        path.moveTo(top.first, top.second)
+//
+//        path.lineTo(inTopRight.first, inTopRight.second)
+//        path.lineTo(right.first, right.second)
+//        path.lineTo(inBottomRight.first, inBottomRight.second)
+//        path.lineTo(bottom.first, bottom.second)
+//
+//        path.lineTo(inBottomLeft.first, inBottomLeft.second)
+//
+//        path.lineTo(left.first, left.second)
+//
+//        path.lineTo(inTopLeft.first, inTopLeft.second)
+//        path.lineTo(top.first, top.second)
+//
+//        path.close()
+//    }
+
+
+
 
 
     override fun onDraw(canvas: Canvas) {
@@ -310,124 +461,7 @@ class ShapeView @JvmOverloads constructor(
     }
 }
 
-//       Tools.PENTAGON -> {
-//                val coordinates: List<Pair<Float, Float>> = calculatePentagonPoints(
-//                    x1,
-//                    y1,
-//                    sqrt(((touchX - x1).pow(2) + (touchY - y1).pow(2)).toDouble()).toFloat()
-//                )
-//                path.reset()
-//                path.moveTo(coordinates[0].first, coordinates[0].second)
-//                for (coordinate in coordinates) {
-//                    path.lineTo(coordinate.first, coordinate.second)
-//                }
-//                path.close()
-//            }
-//
-//            Tools.HEXAGON -> {
-//                val coordinates: List<Pair<Float, Float>> = calculateHexagonPoints(
-//                    x1,
-//                    y1,
-//                    sqrt(((touchX - x1).pow(2) + (touchY - y1).pow(2)).toDouble()).toFloat()
-//                )
-//                path.reset()
-//                path.moveTo(coordinates[0].first, coordinates[0].second)
-//                for (coordinate in coordinates) {
-//                    path.lineTo(coordinate.first, coordinate.second)
-//                }
-//                path.close()
-//            }
-//
-//            Tools.ARROW_MARK -> {
-//                path.reset()
-//
-//                // Draw main arrow line
-//                path.moveTo(x1, y1)
-//                path.lineTo(touchX, touchY)
-//
-//                // Arrow mark size
-//                val markSize = 30f
-//
-//                // Calculate direction vector
-//                val dx = touchX - x1
-//                val dy = touchY - y1
-//                val length = sqrt(dx * dx + dy * dy)
-//                val unitX = dx / length
-//                val unitY = dy / length
-//
-//                // Calculate arrow mark points (small lines at arrow tip)
-//                val markX1 = touchX - markSize * unitX + markSize * unitY
-//                val markY1 = touchY - markSize * unitY - markSize * unitX
-//
-//                val markX2 = touchX - markSize * unitX - markSize * unitY
-//                val markY2 = touchY - markSize * unitY + markSize * unitX
-//
-//                // Draw two short diagonal lines forming "→" at the arrow tip
-//                path.moveTo(touchX, touchY)
-//                path.lineTo(markX1, markY1)
-//
-//                path.moveTo(touchX, touchY)
-//                path.lineTo(markX2, markY2)
-//            }
-//
-//            Tools.PENCIL -> {
-//
-//                path.reset()
-//
-//                // Define arrow dimensions
-//                val shaftWidth = 30f  // Width of the arrow shaft
-//                val arrowHeadSize = 60f  // Size of the arrowhead
-//                val tailWidth = 50f  // Width of the tail
-//                val tailHeight = 40f  // Height of the tail
-//
-//                // Calculate direction vector
-//                val dx = touchX - x1
-//                val dy = touchY - y1
-//                val length = sqrt(dx * dx + dy * dy)
-//                val unitX = dx / length
-//                val unitY = dy / length
-//
-//                // Perpendicular vector for width calculations
-//                val perpX = -unitY * shaftWidth / 2
-//                val perpY = unitX * shaftWidth / 2
-//
-//                // Arrowhead points
-//                val tipX = touchX
-//                val tipY = touchY
-//                val leftHeadX = touchX - arrowHeadSize * unitX + perpX
-//                val leftHeadY = touchY - arrowHeadSize * unitY + perpY
-//                val rightHeadX = touchX - arrowHeadSize * unitX - perpX
-//                val rightHeadY = touchY - arrowHeadSize * unitY - perpY
-//
-//                // Shaft points
-//                val leftShaftX = x1 + perpX
-//                val leftShaftY = y1 + perpY
-//                val rightShaftX = x1 - perpX
-//                val rightShaftY = y1 - perpY
-//
-//                // Tail points
-//                val tailLeftX = x1 + perpX - tailWidth * unitX
-//                val tailLeftY = y1 + perpY - tailWidth * unitY
-//                val tailRightX = x1 - perpX - tailWidth * unitX
-//                val tailRightY = y1 - perpY - tailWidth * unitY
-//
-//                // Draw the outlined arrow shape
-//                path.moveTo(tipX, tipY)  // Move to arrow tip
-//                path.lineTo(leftHeadX, leftHeadY)  // Left side of arrowhead
-//                path.lineTo(leftShaftX, leftShaftY)  // Left side of shaft
-//                path.lineTo(tailLeftX, tailLeftY)  // Left side of tail
-//                path.lineTo(tailRightX, tailRightY)  // Right side of tail
-//                path.lineTo(rightShaftX, rightShaftY)  // Right side of shaft
-//                path.lineTo(rightHeadX, rightHeadY)  // Right side of arrowhead
-//                path.lineTo(tipX, tipY)  // Close the path
-//
-//                path.close()  // Close the arrow outline
-//
-//
-//            }
-//
-//            Tools.ARROW -> {}
-//
+
 //            Tools.STAR_FOUR -> {
 //                path.reset()
 //

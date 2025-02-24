@@ -29,7 +29,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     enum class Tools {
         SOLID_BRUSH, CALLIGRAPHY_BRUSH, SPRAY_BRUSH, BLUR_BRUSH, EMBOSS_BRUSH, DOTTED_BRUSH, NEON_BRUSH, PATTERN_BRUSH,
         ERASER, FILL, TEXT,
-        LINE, CIRCLE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING, PENCIL
+        LINE, CIRCLE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW_DOUBLE, ARROW, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING, PENCIL
     }
 
     private val shapes = listOf(
@@ -44,6 +44,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         Tools.HEXAGON,
         Tools.ARROW_MARK,
         Tools.ARROW,
+        Tools.ARROW_DOUBLE,
         Tools.STAR_FOUR,
         Tools.STAR_FIVE,
         Tools.STAR_SIX,
@@ -111,12 +112,17 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 y1 = touchY
                 touchDown(touchX, touchY)
 
-                shapeView?.let { shapeViewRegion = it.getTouchShapeRegion(touchX, touchY) }
 
-                if (isDrawingShape && shapeViewRegion == ShapeView.ShapeRegion.OUTSIDE)
+                if (shapeView == null){
+                    shapeViewRegion = ShapeView.ShapeRegion.OUTSIDE
+                }else {
+                    shapeView?.let { shapeViewRegion = it.getTouchShapeRegion(touchX, touchY) }
+                }
+                if (isDrawingShape && shapeViewRegion == ShapeView.ShapeRegion.OUTSIDE && shapeView != null)
                 {
                     addShapeToBitmap()
                 }
+
 
             }
 
