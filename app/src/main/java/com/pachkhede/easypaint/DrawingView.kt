@@ -10,6 +10,7 @@ import android.graphics.Point
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
 import androidx.annotation.ColorRes
 import androidx.core.graphics.get
 import com.google.android.material.internal.TouchObserverFrameLayout
@@ -68,7 +69,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private var y1: Float = 0f
 
     // Shape View Variables
-    private var shapeView: ShapeView = ShapeView(context, null, Tools.LINE, paint, x1, y1, 0f, 0f)
+    private var shapeView: ShapeView? = null
     private var lastTouchX = 0f
     private var lastTouchY = 0f
     private var shapeViewRegion = ShapeView.ShapeRegion.OUTSIDE
@@ -90,9 +91,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         bitmap?.let {
             canvas.drawBitmap(it, 0f, 0f, null)
         }
-
-        shapeView.draw(canvas)
-
+        if (isDrawingShape) {
+            shapeView?.draw(canvas)
+        }
         canvas.drawPath(path, paint)
     }
 
@@ -107,27 +108,16 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-//
-                touchDown(touchX, touchY)
-
-
-
-
                 x1 = touchX
                 y1 = touchY
-//                if ( || !isDrawingShape) {
-//
-//
-//                }
+                touchDown(touchX, touchY)
 
+                shapeView?.let { shapeViewRegion = it.getTouchShapeRegion(touchX, touchY) }
 
-
-                if (isDrawingShape && shapeViewRegion == ShapeView.ShapeRegion.OUTSIDE) {
+                if (isDrawingShape && shapeViewRegion == ShapeView.ShapeRegion.OUTSIDE)
+                {
                     addShapeToBitmap()
-                    shapeView =
-                        ShapeView(context, null, Tools.LINE, paint, x1, y1, x1, y1)
                 }
-
 
             }
 
@@ -155,45 +145,45 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         when (shapeViewRegion) {
 
             ShapeView.ShapeRegion.TOP_LEFT -> {
-                shapeView.setTop(touchY)
-                shapeView.setLeft(touchX)
+                shapeView?.setTop(touchY)
+                shapeView?.setLeft(touchX)
             }
 
             ShapeView.ShapeRegion.TOP_RIGHT -> {
-                shapeView.setTop(touchY)
-                shapeView.setRight(touchX)
+                shapeView?.setTop(touchY)
+                shapeView?.setRight(touchX)
             }
 
             ShapeView.ShapeRegion.BOTTOM_LEFT -> {
-                shapeView.setBottom(touchY)
-                shapeView.setLeft(touchX)
+                shapeView?.setBottom(touchY)
+                shapeView?.setLeft(touchX)
             }
 
             ShapeView.ShapeRegion.BOTTOM_RIGHT -> {
-                shapeView.setBottom(touchY)
-                shapeView.setRight(touchX)
+                shapeView?.setBottom(touchY)
+                shapeView?.setRight(touchX)
             }
 
             ShapeView.ShapeRegion.TOP -> {
-                shapeView.setTop(touchY)
+                shapeView?.setTop(touchY)
             }
 
             ShapeView.ShapeRegion.BOTTOM -> {
-                shapeView.setBottom(touchY)
+                shapeView?.setBottom(touchY)
             }
 
             ShapeView.ShapeRegion.LEFT -> {
-                shapeView.setLeft(touchX)
+                shapeView?.setLeft(touchX)
             }
 
             ShapeView.ShapeRegion.RIGHT -> {
-                shapeView.setRight(touchX)
+                shapeView?.setRight(touchX)
             }
 
             ShapeView.ShapeRegion.INSIDE -> {
                 var x3 = touchX - lastTouchX
                 var y3 = touchY - lastTouchY
-                shapeView.setPosition(x3 - shapeView.w / 2, y3 - shapeView.h / 2)
+                shapeView?.setPosition(x3 - shapeView?.w!! / 2, y3 - shapeView?.h!! / 2)
             }
 
             ShapeView.ShapeRegion.OUTSIDE -> {
@@ -205,8 +195,11 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     private fun addShapeToBitmap() {
-        canvas?.drawPath(shapeView.path, shapeView.paint)
-        pushBitmap()
+        shapeView?.let {
+            canvas?.drawPath(it.path, it.paint)
+            shapeView = null
+            pushBitmap()
+        }
     }
 
     private fun pushBitmap() {
@@ -220,6 +213,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             changeColor(currColor)
         }
 
+        shapeView?.let {
+            addShapeToBitmap()
+        }
 
         tool = newTool
         if (tool in shapes) {
@@ -282,6 +278,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         canvas!!.drawColor(backColor)
         bitmapStack.clear()
         redoBitmapStack.clear()
+        shapeView = null
         path.reset()
         pushBitmap()
     }
@@ -289,8 +286,11 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     fun undo() {
         if (bitmapStack.size > 1) {
             redoBitmapStack.push(bitmapStack.pop())
+            refresh()
         }
-        refresh()
+        else {
+            Toast.makeText(context, "No more Undo!", Toast.LENGTH_SHORT).show()
+        }
     }
 
 
@@ -298,7 +298,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         if (redoBitmapStack.isNotEmpty()) {
             bitmapStack.push(redoBitmapStack.pop())
             refresh()
-
+        }
+        else {
+            Toast.makeText(context, "No more Redo!", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -413,12 +415,10 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     private fun touchUp(touchX: Float, touchY: Float) {
-        if (!isDrawingShape) {
-            addShapeToBitmap()
-        }
         when (tool) {
             Tools.SOLID_BRUSH, Tools.ERASER -> {
                 canvas?.drawPath(path, paint)
+                pushBitmap()
 
             }
 
@@ -429,7 +429,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
         }
 
-        pushBitmap()
+
         path.reset()
     }
 
