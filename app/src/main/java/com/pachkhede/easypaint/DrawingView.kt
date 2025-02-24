@@ -29,13 +29,12 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     enum class Tools {
         SOLID_BRUSH, CALLIGRAPHY_BRUSH, SPRAY_BRUSH, BLUR_BRUSH, EMBOSS_BRUSH, DOTTED_BRUSH, NEON_BRUSH, PATTERN_BRUSH,
         ERASER, FILL, TEXT,
-        LINE, CIRCLE, SQUARE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING, PENCIL
+        LINE, CIRCLE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING, PENCIL
     }
 
     private val shapes = listOf(
         Tools.LINE,
         Tools.CIRCLE,
-        Tools.SQUARE,
         Tools.RECTANGLE,
         Tools.RECTANGLE_ROUND,
         Tools.TRIANGLE,
@@ -187,7 +186,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             }
 
             ShapeView.ShapeRegion.OUTSIDE -> {
-                shapeView = ShapeView(context, null, Tools.LINE, paint, x1, y1, touchX, touchY)
+                shapeView = ShapeView(context, null, tool, paint, x1, y1, touchX, touchY)
             }
 
 

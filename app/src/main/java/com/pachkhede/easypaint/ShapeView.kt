@@ -7,11 +7,13 @@ import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Point
 import android.util.AttributeSet
 import android.view.View
 import com.pachkhede.easypaint.DrawingView.Tools
 import kotlin.math.abs
 import kotlin.math.cos
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -51,126 +53,264 @@ class ShapeView @JvmOverloads constructor(
     var w = x2 - x1
     var h = y2 - y1
 
-    var rotationAngle = 0f
+//    var rotationAngle = 0f
 
     private fun updatePath() {
+
         path.reset()
-        path.moveTo(x1, y1)
         when (shape) {
             Tools.LINE -> {
-
+                path.moveTo(x1, y1)
                 path.lineTo(x2, y2)
             }
-//            Tools.CIRCLE -> {
-//                path.reset()
-//                val radius =
-//                    sqrt(((touchX - x1).pow(2) + (touchY - y1).pow(2)).toDouble()).toFloat()
-//                path.addCircle(x1, y1, radius, Path.Direction.CW)
-//            }
-//
-//            Tools.RECTANGLE -> {
-//                path.reset()
-//                path.moveTo(x1, y1)
-//                path.lineTo(touchX, y1)
-//                path.lineTo(touchX, touchY)
-//                path.lineTo(x1, touchY)
-//                path.close()
-//
-//            }
-//
-//            Tools.SQUARE -> {
-//                val w = abs(touchX - x1)
-//                val h = abs(touchY - y1)
-//                val s = maxOf(w, h)
-//
-//                val newX1 = if (touchX < x1) x1 - s else x1
-//                val newY1 = if (touchY < y1) y1 - s else y1
-//
-//                path.reset()
-//                path.moveTo(newX1, newY1)
-//                path.lineTo(newX1 + s, newY1)
-//                path.lineTo(newX1 + s, newY1 + s)
-//                path.lineTo(newX1, newY1 + s)
-//                path.close()
-//
-//            }
-//
-//            Tools.RECTANGLE_ROUND -> {
-//                val r = 50f
-//                path.reset()
-//
-//
-//                val rx = if (touchX < x1) -r else r
-//                val ry = if (touchY < y1) -r else r
-//
-//                path.moveTo(x1 + rx, y1)
-//
-//
-//                path.lineTo(touchX - rx, y1)
-//                path.quadTo(touchX, y1, touchX, y1 + ry)
-//
-//
-//                path.lineTo(touchX, touchY - ry)
-//                path.quadTo(touchX, touchY, touchX - rx, touchY)
-//
-//
-//                path.lineTo(x1 + rx, touchY)
-//                path.quadTo(x1, touchY, x1, touchY - ry)
-//
-//
-//                path.lineTo(x1, y1 + ry)
-//                path.quadTo(x1, y1, x1 + rx, y1)
-//
-//                path.close()
-//
-//            }
-//
-//            Tools.TRIANGLE -> {
-//
-//                val x2 = (x1 + touchX) / 2 // Midpoint for the base
-//                val y2 = y1 - abs(touchX - x1) * sqrt(3.0).toFloat() / 2 // Calculate height
-//
-//                path.reset()
-//                path.moveTo(x1, y1)
-//                path.lineTo(touchX, y1)
-//                path.lineTo(x2, y2)
-//                path.close()
-//
-//            }
-//
-//            Tools.RIGHT_TRIANGLE -> {
-//
-//                path.reset()
-//                path.moveTo(x1, y1)
-//                path.lineTo(touchX, touchY)
-//                path.lineTo(x1, touchY)
-//                path.close()
-//
-//            }
-//
-//            Tools.DIAMOND -> {
-//
-//                path.reset()
-//
-//                val cx = (x1 + touchX) / 2
-//                val cy = (y1 + touchY) / 2
-//
-//                val left = Pair(x1, cy)
-//                val top = Pair(cx, y1)
-//                val right = Pair(touchX, cy)
-//                val bottom = Pair(cx, touchY)
-//
-//
-//                path.moveTo(left.first, left.second)
-//                path.lineTo(top.first, top.second)
-//                path.lineTo(right.first, right.second)
-//                path.lineTo(bottom.first, bottom.second)
-//                path.close()
-//
-//
-//            }
-//
-//            Tools.PENTAGON -> {
+
+            Tools.CIRCLE ->  drawCircle()
+
+            Tools.RECTANGLE -> drawRectangle()
+
+            Tools.RECTANGLE_ROUND -> drawRectangleRoundCorners()
+
+            Tools.TRIANGLE -> drawTriangle()
+
+            Tools.RIGHT_TRIANGLE -> drawRightTriangle()
+
+            Tools.DIAMOND -> drawDiamond()
+
+
+
+            else -> {
+
+            }
+
+        }
+
+
+    }
+
+
+    // draws circle as ellipse
+    private fun drawCircle() {
+        path.reset()
+
+        // Center of ellipse
+        val h = (x1 + x2) / 2
+        val k = (y1 + y2) / 2
+
+        //Semi-major and Semi-minor Axes
+        val a = abs(x2-x1)/2
+        val b = abs(y2-y1)/2
+
+
+        for (i in 0..360) {
+            val theta = Math.toRadians(i.toDouble()) // Convert degrees to radians
+            val x = h + a * cos(theta)
+            val y = k + b * sin(theta)
+            if (i == 0) path.moveTo(x.toFloat(), y.toFloat()) else path.lineTo(x.toFloat(), y.toFloat())
+
+        }
+        
+        path.close()
+    }
+
+    private fun drawRectangle(){
+        path.moveTo(x1, y1)
+        path.lineTo(x2, y1)
+        path.lineTo(x2, y2)
+        path.lineTo(x1, y2)
+        path.close()
+    }
+
+    private fun drawRectangleRoundCorners() {
+
+        val r = 50f
+
+        val rx = if (x2 < x1) -r else r
+        val ry = if (y2 < y1) -r else r
+
+        path.moveTo(x1 + rx, y1)
+
+        path.lineTo(x2 - rx, y1)
+        path.quadTo(x2, y1, x2, y1+ry)
+
+        path.lineTo(x2, y2 - ry)
+        path.quadTo(x2, y2, x2 - rx, y2)
+
+        path.lineTo(x1 +rx, y2)
+        path.quadTo(x1, y2, x1 , y2 - ry)
+
+        path.lineTo(x1, y1 + ry)
+        path.quadTo(x1, y1, x1 + rx, y1)
+
+        path.close()
+    }
+
+    private fun drawDiamond(){
+        val cx =( x1 + x2 ) /2
+        val cy = (y1 + y2) / 2
+
+        path.moveTo(cx, y1)
+        path.lineTo(x2, cy)
+        path.lineTo(cx, y2)
+        path.lineTo(x1, cy)
+        path.close()
+
+    }
+
+    private fun drawTriangle() {
+        val cx =( x1 + x2 ) /2
+
+        path.moveTo(cx, y1)
+        path.lineTo(x2, y2)
+        path.lineTo(x1, y2)
+        path.close()
+
+    }
+
+    private fun drawRightTriangle() {
+
+        path.moveTo(x1, y1)
+        path.lineTo(x2, y2)
+        path.lineTo(x1, y2)
+        path.close()
+
+    }
+
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        canvas.save()
+        updatePath()
+        drawBorder()
+        drawBorderCircles(canvas)
+        canvas.drawPath(borderPath, borderPaint)
+        canvas.drawPath(path, paint)
+        canvas.restore()
+    }
+
+    private fun drawBorder() {
+        borderPath.reset()
+        borderPath.moveTo(x1, y1)
+        borderPath.lineTo(x2, y1)
+        borderPath.lineTo(x2, y2)
+        borderPath.lineTo(x1, y2)
+        borderPath.close()
+    }
+
+    private fun drawBorderCircles(canvas: Canvas) {
+        val circlePaint = Paint().apply {
+            color = borderPaint.color
+            strokeWidth = 5f
+            style = Paint.Style.FILL
+        }
+
+        val radius = 10f
+
+        val points = listOf(
+            Pair(x1, y1),
+            Pair(x2, y2),
+            Pair(x1, y2),
+            Pair(x2, y1),
+            Pair((x1 + x2) / 2, y1),
+            Pair((x1 + x2) / 2, y2),
+            Pair(x1, (y1 + y2) / 2),
+            Pair(x2, (y1 + y2) / 2),
+
+            )
+
+        for (point in points) {
+            canvas.drawCircle(point.first, point.second, radius, circlePaint)
+        }
+
+    }
+
+    fun setPosition(x: Float, y: Float) {
+        x1 = x
+        y1 = y
+        x2 = x + w
+        y2 = y + h
+        updatePath()
+
+    }
+
+    fun setTop(y: Float) {
+//        y1 = y
+        if (y1 < y2) y1 = y else y2 = y
+        h = y2 - y1
+    }
+
+    fun setBottom(y: Float) {
+//        y2 = y
+        if (y2 > y1) y2 = y else y1 = y
+        h = y2 - y1
+
+
+    }
+
+    fun setLeft(x: Float) {
+//        x1 = x
+        if (x1 < x2) x1 = x else x2 = x
+        w = x2 - x1
+    }
+
+    fun setRight(x: Float) {
+//        x2 = x
+        if (x2 > x1) x2 = x else x1 = x
+        w = x2 - x1
+    }
+
+    fun getTouchShapeRegion(touchX: Float, touchY: Float): ShapeRegion {
+        val left = minOf(x1, x2)
+        val right = maxOf(x1, x2)
+        val top = minOf(y1, y2)
+        val bottom = maxOf(y1, y2)
+
+        return when {
+
+            checkCornerTouched(touchX, touchY, left, top) -> ShapeRegion.TOP_LEFT
+            checkCornerTouched(touchX, touchY, right, top) -> ShapeRegion.TOP_RIGHT
+            checkCornerTouched(touchX, touchY, left, bottom) -> ShapeRegion.BOTTOM_LEFT
+            checkCornerTouched(touchX, touchY, right, bottom) -> ShapeRegion.BOTTOM_RIGHT
+
+            checkHorizontalSideTouched(touchX, touchY, left, right, top) -> ShapeRegion.TOP
+            checkHorizontalSideTouched(touchX, touchY, left, right, bottom) -> ShapeRegion.BOTTOM
+
+            checkVerticalSideTouched(touchX, touchY, top, bottom, left) -> ShapeRegion.LEFT
+            checkVerticalSideTouched(touchX, touchY, top, bottom, right) -> ShapeRegion.RIGHT
+
+
+            touchX in left..right && touchY in top..bottom -> ShapeRegion.INSIDE
+
+            else -> ShapeRegion.OUTSIDE
+        }
+
+    }
+
+    private fun checkCornerTouched(tx: Float, ty: Float, px: Float, py: Float): Boolean {
+        return abs(tx - px) <= touchMargin && abs(ty - py) <= touchMargin
+    }
+
+    private fun checkHorizontalSideTouched(
+        tx: Float,
+        ty: Float,
+        left: Float,
+        right: Float,
+        y: Float
+    ): Boolean {
+        return tx in (left - touchMargin)..(right + touchMargin) && abs(ty - y) <= touchMargin
+    }
+
+    private fun checkVerticalSideTouched(
+        tx: Float,
+        ty: Float,
+        top: Float,
+        bottom: Float,
+        x: Float
+    ): Boolean {
+        return ty in (top - touchMargin)..(bottom + touchMargin) && abs(tx - x) <= touchMargin
+    }
+}
+
+//       Tools.PENTAGON -> {
 //                val coordinates: List<Pair<Float, Float>> = calculatePentagonPoints(
 //                    x1,
 //                    y1,
@@ -318,181 +458,3 @@ class ShapeView @JvmOverloads constructor(
 //
 //
 //            }
-
-            else -> {
-
-            }
-
-        }
-
-
-    }
-
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        canvas.save()
-        updatePath()
-        drawBorder()
-        drawBorderCircles(canvas)
-        canvas.drawPath(borderPath, borderPaint)
-        canvas.drawPath(path, paint)
-        canvas.restore()
-    }
-
-    private fun drawBorder() {
-        borderPath.reset()
-        borderPath.moveTo(x1, y1)
-        borderPath.lineTo(x2, y1)
-        borderPath.lineTo(x2, y2)
-        borderPath.lineTo(x1, y2)
-        borderPath.close()
-    }
-
-    private fun drawBorderCircles(canvas: Canvas) {
-        val circlePaint = Paint().apply {
-            color = borderPaint.color
-            strokeWidth = 5f
-            style = Paint.Style.FILL
-        }
-
-        val radius = 10f
-
-        val points = listOf(
-            Pair(x1, y1),
-            Pair(x2, y2),
-            Pair(x1, y2),
-            Pair(x2, y1),
-            Pair((x1 + x2) / 2, y1),
-            Pair((x1 + x2) / 2, y2),
-            Pair(x1, (y1 + y2) / 2),
-            Pair(x2, (y1 + y2) / 2),
-
-            )
-
-        for (point in points) {
-            canvas.drawCircle(point.first, point.second, radius, circlePaint)
-        }
-
-    }
-
-    fun setPosition(x: Float, y: Float) {
-        x1 = x
-        y1 = y
-        x2 = x + w
-        y2 = y + h
-        updatePath()
-
-    }
-
-    fun setTop(y: Float) {
-//        y1 = y
-        if (y1 < y2) y1 = y else y2 = y
-        h = y2 - y1
-    }
-
-    fun setBottom(y: Float) {
-//        y2 = y
-        if (y2 > y1) y2 = y else y1 = y
-        h = y2 - y1
-
-
-    }
-
-    fun setLeft(x: Float) {
-//        x1 = x
-        if (x1 < x2) x1 = x else x2 = x
-        w = x2 - x1
-    }
-
-    fun setRight(x: Float) {
-//        x2 = x
-        if (x2 > x1) x2 = x else x1 = x
-        w = x2 - x1
-    }
-
-    fun getTouchShapeRegion(touchX: Float, touchY: Float): ShapeRegion {
-        val left = minOf(x1, x2)
-        val right = maxOf(x1, x2)
-        val top = minOf(y1, y2)
-        val bottom = maxOf(y1, y2)
-
-        return when {
-
-            checkCornerTouched(touchX, touchY, left, top) -> ShapeRegion.TOP_LEFT
-            checkCornerTouched(touchX, touchY, right, top) -> ShapeRegion.TOP_RIGHT
-            checkCornerTouched(touchX, touchY, left, bottom) -> ShapeRegion.BOTTOM_LEFT
-            checkCornerTouched(touchX, touchY, right, bottom) -> ShapeRegion.BOTTOM_RIGHT
-
-            checkHorizontalSideTouched(touchX, touchY, left, right, top) -> ShapeRegion.TOP
-            checkHorizontalSideTouched(touchX, touchY, left, right, bottom) -> ShapeRegion.BOTTOM
-
-            checkVerticalSideTouched(touchX, touchY, top, bottom, left) -> ShapeRegion.LEFT
-            checkVerticalSideTouched(touchX, touchY, top, bottom, right) -> ShapeRegion.RIGHT
-
-
-            touchX in left..right && touchY in top..bottom -> ShapeRegion.INSIDE
-
-            else -> ShapeRegion.OUTSIDE
-        }
-
-    }
-
-    private fun checkCornerTouched(tx: Float, ty: Float, px: Float, py: Float): Boolean {
-        return abs(tx - px) <= touchMargin && abs(ty - py) <= touchMargin
-    }
-
-    private fun checkHorizontalSideTouched(
-        tx: Float,
-        ty: Float,
-        left: Float,
-        right: Float,
-        y: Float
-    ): Boolean {
-        return tx in (left - touchMargin)..(right + touchMargin) && abs(ty - y) <= touchMargin
-    }
-
-    private fun checkVerticalSideTouched(
-        tx: Float,
-        ty: Float,
-        top: Float,
-        bottom: Float,
-        x: Float
-    ): Boolean {
-        return ty in (top - touchMargin)..(bottom + touchMargin) && abs(tx - x) <= touchMargin
-    }
-
-//    Tools.LINE -> {
-//        canvas?.drawLine(x1, y1, touchX, touchY, paint)
-//    }
-//
-//    Tools.CIRCLE, Tools.RECTANGLE, Tools.SQUARE, Tools.RECTANGLE_ROUND, Tools.TRIANGLE, Tools.RIGHT_TRIANGLE, Tools.DIAMOND, Tools.PENTAGON, Tools.HEXAGON, Tools.ARROW_MARK, Tools.ARROW, Tools.PENCIL, Tools.STAR_FOUR -> {
-//        canvas?.drawPath(path, paint)
-//    }
-
-
-    private fun calculatePentagonPoints(cx: Float, cy: Float, R: Float): List<Pair<Float, Float>> {
-        val points = mutableListOf<Pair<Float, Float>>()
-        val angleOffset = Math.PI / 2  // Rotates so the top vertex is centered
-
-        for (i in 0 until 5) {
-            val angle = (2 * Math.PI * i / 5) - angleOffset
-            val x = cx + R * cos(angle).toFloat()
-            val y = cy + R * sin(angle).toFloat()
-            points.add(Pair(x, y))
-        }
-        return points
-    }
-
-    fun calculateHexagonPoints(cx: Float, cy: Float, R: Float): List<Pair<Float, Float>> {
-        val points = mutableListOf<Pair<Float, Float>>()
-        val angleOffset = Math.PI / 6  // Rotates so the flat sides are aligned properly
-
-        for (i in 0 until 6) {
-            val angle = (2 * Math.PI * i / 6) - angleOffset
-            val x = cx + R * cos(angle).toFloat()
-            val y = cy + R * sin(angle).toFloat()
-            points.add(Pair(x, y))
-        }
-        return points
-    }
-}

@@ -53,7 +53,6 @@ class MainActivity : AppCompatActivity() {
 
         Item("Line", R.drawable.line, DrawingView.Tools.LINE),
         Item("Circle", R.drawable.circle, DrawingView.Tools.CIRCLE),
-        Item("Square", R.drawable.square, DrawingView.Tools.SQUARE),
         Item("Rectangle", R.drawable.rectangle, DrawingView.Tools.RECTANGLE),
         Item("RectangleRound", R.drawable.rectangle_rounded, DrawingView.Tools.RECTANGLE_ROUND),
         Item("Triangle", R.drawable.triangle, DrawingView.Tools.TRIANGLE),
