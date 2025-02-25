@@ -38,7 +38,7 @@ class ShapeView @JvmOverloads constructor(
         INSIDE, OUTSIDE
     }
 
-    val touchMargin = 30f
+    private val touchMargin = 30f
 
     var paint: Paint = shapePaint
     var path = Path()
@@ -89,6 +89,11 @@ class ShapeView @JvmOverloads constructor(
             Tools.HEXAGON -> drawHexagon()
 
             Tools.STAR_FOUR -> drawStarFour()
+
+            Tools.STAR_FIVE -> drawStarFive()
+
+            Tools.STAR_SIX -> drawStarSix()
+
             else -> {
 
             }
@@ -364,6 +369,39 @@ class ShapeView @JvmOverloads constructor(
 
     }
 
+    private fun drawStarFive() {
+        val angles = listOf(90, 234, 378, 162, 306)
+
+        for (angle in angles){
+            val point  = getEllipsePoints(angle)
+
+
+            if (angle == 90) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
+
+        }
+
+        path.close()
+
+    }
+
+    private fun drawStarSix() {
+        val angles = listOf(90, 210, 330, 150, 270, 30)
+
+        for (i in 0..2){
+            val point  = getEllipsePoints(angles[i])
+            if (i == 0) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
+        }
+
+        path.close()
+
+        for (i in 3..5){
+            val point  = getEllipsePoints(angles[i])
+            if (i == 3) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
+        }
+
+        path.close()
+
+    }
 
 
 
