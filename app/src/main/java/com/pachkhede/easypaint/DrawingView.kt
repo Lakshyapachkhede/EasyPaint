@@ -12,8 +12,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.annotation.ColorRes
+import androidx.core.graphics.component1
+import androidx.core.graphics.component2
 import androidx.core.graphics.get
 import com.google.android.material.internal.TouchObserverFrameLayout
+import java.util.Deque
 import java.util.LinkedList
 import java.util.Queue
 import java.util.Stack
@@ -328,63 +331,40 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     private fun floodFill(x: Int, y: Int, targetColor: Int, replacementColor: Int) {
-        if (targetColor == replacementColor) return
+        if (targetColor == replacementColor) return  // No need to fill if same color
 
         val width = bitmap!!.width
         val height = bitmap!!.height
-        val queue: Queue<Point> = LinkedList()
+        val pixels = IntArray(width * height)  // Store pixels in an array
+        bitmap!!.getPixels(pixels, 0, width, 0, 0, width, height)  // Bulk read pixels
 
+        val queue: Deque<Point> = LinkedList()
+        // Kotlin infers the type
         queue.add(Point(x, y))
 
-        // Create a new path to represent the flood fill
-        val fillPath = Path()
-
         while (queue.isNotEmpty()) {
-            val node = queue.poll()
-            var px = node.x
-            var py = node.y
+            val (px, py) = queue.pop()
 
-            // Move left until a different color is found
-            while (px > 0 && bitmap?.getPixel(px - 1, py) == targetColor) {
-                px--
-            }
+            // Boundary check
+            if (px !in 0 until width || py !in 0 until height) continue
 
-            var spanUp = false
-            var spanDown = false
+            val index = py * width + px
+            if (pixels[index] != targetColor) continue  // Skip non-target colors
 
-            // Move right, filling pixels and checking for spans
-            while (px < width && bitmap?.getPixel(px, py) == targetColor) {
-                bitmap!!.setPixel(px, py, replacementColor)
+            pixels[index] = replacementColor  // Apply new color
 
-                // Add the filled pixel to the fillPath
-
-                // Check for a span above
-                if (!spanUp && py > 0 && bitmap!!.getPixel(px, py - 1) == targetColor) {
-                    queue.add(Point(px, py - 1))
-                    spanUp = true
-                } else if (spanUp && py > 0 && bitmap!!.getPixel(px, py - 1) != targetColor) {
-                    spanUp = false
-                }
-
-                // Check for a span below
-                if (!spanDown && py < height - 1 && bitmap!!.getPixel(px, py + 1) == targetColor) {
-                    queue.add(Point(px, py + 1))
-                    spanDown = true
-                } else if (spanDown && py < height - 1 && bitmap!!.getPixel(
-                        px,
-                        py + 1
-                    ) != targetColor
-                ) {
-                    spanDown = false
-                }
-
-                px++
-            }
+            queue.add(Point(px, py + 1))  // Down
+            queue.add(Point(px, py - 1))  // Up
+            queue.add(Point(px + 1, py))  // Right
+            queue.add(Point(px - 1, py))  // Left
         }
 
-        // Redraw the canvas
-        invalidate()
+        // Bulk update pixels in the bitmap
+        bitmap!!.setPixels(pixels, 0, width, 0, 0, width, height)
+
+        invalidate()  // Redraw the canvas
     }
+
 
     private fun touchDown(touchX: Float, touchY: Float) {
         when (tool) {

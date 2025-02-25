@@ -78,15 +78,17 @@ class ShapeView @JvmOverloads constructor(
 
             Tools.DIAMOND -> drawDiamond()
 
-            Tools.PENTAGON -> drawPentagon()
-
             Tools.ARROW_MARK -> drawArrowMark()
 
             Tools.ARROW_DOUBLE -> drawArrowMarkDouble()
 
             Tools.ARROW -> drawArrowOutline()
 
+            Tools.PENTAGON -> drawPentagon()
 
+            Tools.HEXAGON -> drawHexagon()
+
+            Tools.STAR_FOUR -> drawStarFour()
             else -> {
 
             }
@@ -96,11 +98,7 @@ class ShapeView @JvmOverloads constructor(
 
     }
 
-
-    // draws circle as ellipse
-    private fun drawCircle() {
-        path.reset()
-
+    private fun getEllipsePoints(degrees:Int) : Pair<Double, Double>{
         // Center of ellipse
         val h = (x1 + x2) / 2
         val k = (y1 + y2) / 2
@@ -109,17 +107,52 @@ class ShapeView @JvmOverloads constructor(
         val a = abs(x2-x1)/2
         val b = abs(y2-y1)/2
 
+        val theta = Math.toRadians(degrees.toDouble()) // Convert degrees to radians
+        val x = h + a * cos(theta)
+        val y = k - b * sin(theta)
+
+        return Pair(x,y)
+    }
+
+    // draws circle as ellipse
+    private fun drawCircle() {
+        path.reset()
 
         for (i in 0..360) {
-            val theta = Math.toRadians(i.toDouble()) // Convert degrees to radians
-            val x = h + a * cos(theta)
-            val y = k + b * sin(theta)
-            if (i == 0) path.moveTo(x.toFloat(), y.toFloat()) else path.lineTo(x.toFloat(), y.toFloat())
-
+            val point  = getEllipsePoints(i)
+            if (i == 0) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
         }
         
         path.close()
     }
+
+    private fun drawPentagon(){
+        val angles = listOf(90, 162, 234, 306, 378)
+
+        for (angle in angles){
+            val point  = getEllipsePoints(angle)
+
+            if (angle == 90) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
+
+        }
+
+        path.close()
+
+    }
+
+    private fun drawHexagon() {
+        val angles = listOf(90, 150, 210, 270, 330, 390)
+
+        for (angle in angles){
+            val point  = getEllipsePoints(angle)
+
+            if (angle == 90) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
+
+        }
+        path.close()
+
+    }
+
 
     private fun drawRectangle(){
         path.moveTo(x1, y1)
@@ -181,17 +214,6 @@ class ShapeView @JvmOverloads constructor(
         path.lineTo(x2, y2)
         path.lineTo(x1, y2)
         path.close()
-
-    }
-
-    private fun drawPentagon() {
-
-        val cx = (x1 + x2 ) /2
-        val cy = (y1 + y2) /2
-
-
-        path.close()
-
 
     }
 
@@ -291,37 +313,60 @@ class ShapeView @JvmOverloads constructor(
 
     }
 
-//    private fun drawStarFour() {
-//
-//        val cx = x1 + w / 2
-//        val cy = y1 + h / 2
-//
-//        val top = Pair(cx, y1)
-//        val bottom = Pair(cx, y2)
-//        val left = Pair(x1, cy)
-//        val right = Pair(x2, cy)
-//
-//        val inTopLeft = Pair(x1 + w / 4, y1 + h/4)
-//        val inTopRight = Pair(x1 + 3 * w / 4, y1 + h /4)
-//        val inBottomLeft = Pair(x1 + w/4, y1 + 3 * h / 4)
-//        val inBottomRight = Pair(x1 + 3 * w /4, y1 + 3 * h/4)
-//
-//        path.moveTo(top.first, top.second)
-//
-//        path.lineTo(inTopRight.first, inTopRight.second)
-//        path.lineTo(right.first, right.second)
-//        path.lineTo(inBottomRight.first, inBottomRight.second)
-//        path.lineTo(bottom.first, bottom.second)
-//
-//        path.lineTo(inBottomLeft.first, inBottomLeft.second)
-//
-//        path.lineTo(left.first, left.second)
-//
-//        path.lineTo(inTopLeft.first, inTopLeft.second)
-//        path.lineTo(top.first, top.second)
-//
-//        path.close()
-//    }
+    private fun getStarFourInnerPoints(degrees:Int) : Pair<Double, Double>{
+
+        // inner rectangle calculation
+        val multiplicationFactor = 0.293
+
+        val inx1 = ((w - (w * multiplicationFactor)) / 2) + x1
+        val iny1 = ((h - (h * multiplicationFactor)) / 2) + y1
+
+        val inx2 = inx1 + w * multiplicationFactor
+        val iny2 = iny1 + h * multiplicationFactor
+
+
+        // getting ellipse in inner rectangle
+        val h = ((inx1 + inx2) / 2 )
+        val k = ((iny1 + iny2) / 2)
+
+        //Semi-major and Semi-minor Axes
+        val a = (abs(inx2-inx1)/2)
+        val b = (abs(iny2-iny1)/2)
+
+        val theta = Math.toRadians(degrees.toDouble()) // Convert degrees to radians
+        val x = h + a * cos(theta)
+        val y = k - b * sin(theta)
+
+        return Pair(x,y)
+    }
+
+    private fun drawStarFour(){
+        val angles = listOf(0, 45, 90, 135, 180, 225, 270, 315)
+
+        for (i in angles.indices){
+            val isInside = i % 2 == 1
+
+            val point : Pair<Double, Double>
+            if (isInside){
+                point = getStarFourInnerPoints(angles[i])
+            }
+
+            else {
+                point = getEllipsePoints(angles[i])
+            }
+
+
+            if (i == 0) path.moveTo(point.first.toFloat(), point.second.toFloat())
+            else path.lineTo(point.first.toFloat(), point.second.toFloat())
+        }
+
+        path.close()
+
+    }
+
+
+
+
 
 
 
@@ -345,6 +390,21 @@ class ShapeView @JvmOverloads constructor(
         borderPath.lineTo(x2, y2)
         borderPath.lineTo(x1, y2)
         borderPath.close()
+
+//        val multiplicationFactor = 0.293;
+//
+//        val inx1 = ((w - (w * multiplicationFactor)) / 2) + x1
+//        val iny1 = ((h - (h * multiplicationFactor)) / 2) + y1
+//
+//        val inx2 = inx1 + w * multiplicationFactor
+//        val iny2 = iny1 + h * multiplicationFactor
+//
+//        borderPath.moveTo(inx1.toFloat(), iny1.toFloat())
+//        borderPath.lineTo(inx2.toFloat(), iny1.toFloat())
+//        borderPath.lineTo(inx2.toFloat(), iny2.toFloat())
+//        borderPath.lineTo(inx1.toFloat(), iny2.toFloat())
+//        borderPath.close()
+
     }
 
     private fun drawBorderCircles(canvas: Canvas) {
@@ -461,34 +521,3 @@ class ShapeView @JvmOverloads constructor(
     }
 }
 
-
-//            Tools.STAR_FOUR -> {
-//                path.reset()
-//
-//                // Calculate center of the star
-//                val cx = (x1 + touchX) / 2
-//                val cy = (y1 + touchY) / 2
-//
-//                // Compute outer radius (distance from center to touch point)
-//                val R_outer = sqrt((touchX - cx).pow(2) + (touchY - cy).pow(2))
-//
-//                // Compute inner radius (adjustable, generally half of outer radius)
-//                val R_inner = R_outer * 0.5f  // You can tweak this ratio
-//
-//                // Define angles for 4-point star (outer & inner points alternating)
-//                val angles = arrayOf(0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0)
-//
-//                for (i in angles.indices) {
-//                    val angleRad = Math.toRadians(angles[i]) // Convert to radians
-//                    val radius = if (i % 2 == 0) R_outer else R_inner // Alternate radius
-//
-//                    val x = cx + (radius * cos(angleRad)).toFloat()
-//                    val y = cy + (radius * sin(angleRad)).toFloat()
-//
-//                    if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-//                }
-//
-//                path.close() // Close the star shape
-//
-//
-//            }
