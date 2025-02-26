@@ -32,7 +32,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     enum class Tools {
         SOLID_BRUSH, CALLIGRAPHY_BRUSH, SPRAY_BRUSH, BLUR_BRUSH, EMBOSS_BRUSH, DOTTED_BRUSH, NEON_BRUSH, PATTERN_BRUSH,
         ERASER, FILL, TEXT,
-        LINE, CIRCLE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW_DOUBLE, ARROW, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING, PENCIL
+        LINE, CIRCLE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW_DOUBLE, ARROW, ARROW2, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING, PENCIL
     }
 
     private val shapes = listOf(
@@ -47,6 +47,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         Tools.HEXAGON,
         Tools.ARROW_MARK,
         Tools.ARROW,
+        Tools.ARROW2,
         Tools.ARROW_DOUBLE,
         Tools.STAR_FOUR,
         Tools.STAR_FIVE,

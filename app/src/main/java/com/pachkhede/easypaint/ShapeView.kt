@@ -12,6 +12,7 @@ import android.util.AttributeSet
 import android.view.View
 import com.pachkhede.easypaint.DrawingView.Tools
 import kotlinx.coroutines.flow.emptyFlow
+import java.lang.Math.pow
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -66,7 +67,7 @@ class ShapeView @JvmOverloads constructor(
                 path.lineTo(x2, y2)
             }
 
-            Tools.CIRCLE ->  drawCircle()
+            Tools.CIRCLE -> drawCircle()
 
             Tools.RECTANGLE -> drawRectangle()
 
@@ -84,6 +85,8 @@ class ShapeView @JvmOverloads constructor(
 
             Tools.ARROW -> drawArrowOutline()
 
+            Tools.ARROW2 -> drawArrowOutlineUp()
+
             Tools.PENTAGON -> drawPentagon()
 
             Tools.HEXAGON -> drawHexagon()
@@ -94,6 +97,8 @@ class ShapeView @JvmOverloads constructor(
 
             Tools.STAR_SIX -> drawStarSix()
 
+            Tools.HEART -> drawHeart()
+
             else -> {
 
             }
@@ -103,20 +108,20 @@ class ShapeView @JvmOverloads constructor(
 
     }
 
-    private fun getEllipsePoints(degrees:Int) : Pair<Double, Double>{
+    private fun getEllipsePoints(degrees: Int): Pair<Double, Double> {
         // Center of ellipse
         val h = (x1 + x2) / 2
         val k = (y1 + y2) / 2
 
         //Semi-major and Semi-minor Axes
-        val a = abs(x2-x1)/2
-        val b = abs(y2-y1)/2
+        val a = abs(x2 - x1) / 2
+        val b = abs(y2 - y1) / 2
 
         val theta = Math.toRadians(degrees.toDouble()) // Convert degrees to radians
         val x = h + a * cos(theta)
         val y = k - b * sin(theta)
 
-        return Pair(x,y)
+        return Pair(x, y)
     }
 
     // draws circle as ellipse
@@ -124,20 +129,26 @@ class ShapeView @JvmOverloads constructor(
         path.reset()
 
         for (i in 0..360) {
-            val point  = getEllipsePoints(i)
-            if (i == 0) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
+            val point = getEllipsePoints(i)
+            if (i == 0) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(
+                point.first.toFloat(),
+                point.second.toFloat()
+            )
         }
-        
+
         path.close()
     }
 
-    private fun drawPentagon(){
+    private fun drawPentagon() {
         val angles = listOf(90, 162, 234, 306, 378)
 
-        for (angle in angles){
-            val point  = getEllipsePoints(angle)
+        for (angle in angles) {
+            val point = getEllipsePoints(angle)
 
-            if (angle == 90) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
+            if (angle == 90) path.moveTo(
+                point.first.toFloat(),
+                point.second.toFloat()
+            ) else path.lineTo(point.first.toFloat(), point.second.toFloat())
 
         }
 
@@ -148,10 +159,13 @@ class ShapeView @JvmOverloads constructor(
     private fun drawHexagon() {
         val angles = listOf(90, 150, 210, 270, 330, 390)
 
-        for (angle in angles){
-            val point  = getEllipsePoints(angle)
+        for (angle in angles) {
+            val point = getEllipsePoints(angle)
 
-            if (angle == 90) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
+            if (angle == 90) path.moveTo(
+                point.first.toFloat(),
+                point.second.toFloat()
+            ) else path.lineTo(point.first.toFloat(), point.second.toFloat())
 
         }
         path.close()
@@ -159,7 +173,7 @@ class ShapeView @JvmOverloads constructor(
     }
 
 
-    private fun drawRectangle(){
+    private fun drawRectangle() {
         path.moveTo(x1, y1)
         path.lineTo(x2, y1)
         path.lineTo(x2, y2)
@@ -177,13 +191,13 @@ class ShapeView @JvmOverloads constructor(
         path.moveTo(x1 + rx, y1)
 
         path.lineTo(x2 - rx, y1)
-        path.quadTo(x2, y1, x2, y1+ry)
+        path.quadTo(x2, y1, x2, y1 + ry)
 
         path.lineTo(x2, y2 - ry)
         path.quadTo(x2, y2, x2 - rx, y2)
 
-        path.lineTo(x1 +rx, y2)
-        path.quadTo(x1, y2, x1 , y2 - ry)
+        path.lineTo(x1 + rx, y2)
+        path.quadTo(x1, y2, x1, y2 - ry)
 
         path.lineTo(x1, y1 + ry)
         path.quadTo(x1, y1, x1 + rx, y1)
@@ -191,8 +205,8 @@ class ShapeView @JvmOverloads constructor(
         path.close()
     }
 
-    private fun drawDiamond(){
-        val cx =( x1 + x2 ) /2
+    private fun drawDiamond() {
+        val cx = (x1 + x2) / 2
         val cy = (y1 + y2) / 2
 
         path.moveTo(cx, y1)
@@ -204,7 +218,7 @@ class ShapeView @JvmOverloads constructor(
     }
 
     private fun drawTriangle() {
-        val cx =( x1 + x2 ) /2
+        val cx = (x1 + x2) / 2
 
         path.moveTo(cx, y1)
         path.lineTo(x2, y2)
@@ -281,7 +295,6 @@ class ShapeView @JvmOverloads constructor(
         path.lineTo(xHead2, yHead2)
 
 
-
         // Compute arrowhead points
         val xHead21 = x1 + arrowHeadLength * cos(angleLine - angle).toFloat()
         val yHead21 = y1 + arrowHeadLength * sin(angleLine - angle).toFloat()
@@ -299,13 +312,13 @@ class ShapeView @JvmOverloads constructor(
     private fun drawArrowOutline() {
 
         path.reset()
-        val cx = (x1 + x2 ) /2
-        val cy = (y1 + y2) /2
+        val cx = (x1 + x2) / 2
+        val cy = (y1 + y2) / 2
 
-        path.moveTo(x1, (y1 + cy )/2)
-        path.lineTo(x1, (y2 + cy )/2)
+        path.moveTo(x1, (y1 + cy) / 2)
+        path.lineTo(x1, (y2 + cy) / 2)
 
-        path.lineTo(cx, (y2 + cy )/2)
+        path.lineTo(cx, (y2 + cy) / 2)
 
         path.lineTo(cx, y2)
         path.lineTo(x2, cy)
@@ -318,7 +331,28 @@ class ShapeView @JvmOverloads constructor(
 
     }
 
-    private fun getStarFourInnerPoints(degrees:Int) : Pair<Double, Double>{
+    private fun drawArrowOutlineUp() {
+        path.reset()
+        val cx = (x1 + x2) / 2
+        val cy = (y1 + y2) / 2
+
+        path.moveTo((x1 + cx) / 2, y2)
+
+        path.lineTo((x2 + cx) / 2, y2)
+
+        path.lineTo((x2 + cx) / 2, cy)
+        path.lineTo(x2, cy)
+        path.lineTo(cx, y1)
+        path.lineTo(x1, cy)
+        path.lineTo((x1 + cx) / 2, cy)
+        path.lineTo((x1 + cx) / 2, y2)
+
+
+        path.close()
+    }
+
+
+    private fun getStarFourInnerPoints(degrees: Int): Pair<Double, Double> {
 
         // inner rectangle calculation
         val multiplicationFactor = 0.293
@@ -331,32 +365,30 @@ class ShapeView @JvmOverloads constructor(
 
 
         // getting ellipse in inner rectangle
-        val h = ((inx1 + inx2) / 2 )
+        val h = ((inx1 + inx2) / 2)
         val k = ((iny1 + iny2) / 2)
 
         //Semi-major and Semi-minor Axes
-        val a = (abs(inx2-inx1)/2)
-        val b = (abs(iny2-iny1)/2)
+        val a = (abs(inx2 - inx1) / 2)
+        val b = (abs(iny2 - iny1) / 2)
 
         val theta = Math.toRadians(degrees.toDouble()) // Convert degrees to radians
         val x = h + a * cos(theta)
         val y = k - b * sin(theta)
 
-        return Pair(x,y)
+        return Pair(x, y)
     }
 
-    private fun drawStarFour(){
+    private fun drawStarFour() {
         val angles = listOf(0, 45, 90, 135, 180, 225, 270, 315)
 
-        for (i in angles.indices){
+        for (i in angles.indices) {
             val isInside = i % 2 == 1
 
-            val point : Pair<Double, Double>
-            if (isInside){
+            val point: Pair<Double, Double>
+            if (isInside) {
                 point = getStarFourInnerPoints(angles[i])
-            }
-
-            else {
+            } else {
                 point = getEllipsePoints(angles[i])
             }
 
@@ -372,11 +404,14 @@ class ShapeView @JvmOverloads constructor(
     private fun drawStarFive() {
         val angles = listOf(90, 234, 378, 162, 306)
 
-        for (angle in angles){
-            val point  = getEllipsePoints(angle)
+        for (angle in angles) {
+            val point = getEllipsePoints(angle)
 
 
-            if (angle == 90) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
+            if (angle == 90) path.moveTo(
+                point.first.toFloat(),
+                point.second.toFloat()
+            ) else path.lineTo(point.first.toFloat(), point.second.toFloat())
 
         }
 
@@ -387,27 +422,48 @@ class ShapeView @JvmOverloads constructor(
     private fun drawStarSix() {
         val angles = listOf(90, 210, 330, 150, 270, 30)
 
-        for (i in 0..2){
-            val point  = getEllipsePoints(angles[i])
-            if (i == 0) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
+        for (i in 0..2) {
+            val point = getEllipsePoints(angles[i])
+            if (i == 0) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(
+                point.first.toFloat(),
+                point.second.toFloat()
+            )
         }
 
         path.close()
 
-        for (i in 3..5){
-            val point  = getEllipsePoints(angles[i])
-            if (i == 3) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(point.first.toFloat(), point.second.toFloat())
+        for (i in 3..5) {
+            val point = getEllipsePoints(angles[i])
+            if (i == 3) path.moveTo(point.first.toFloat(), point.second.toFloat()) else path.lineTo(
+                point.first.toFloat(),
+                point.second.toFloat()
+            )
         }
 
         path.close()
 
     }
 
+    private fun drawHeart() {
+
+
+        path.reset()
+
+        for (i in 0..360) {
+            val t = Math.toRadians(i.toDouble())
+            val x = (sqrt(2.0) * sin(t).toDouble().pow(3)).toFloat()
+            val y = (-cos(t).pow(3)  -cos(t).pow(2) + 2 * cos(t)).toFloat()
+
+            if (i == 0) path.moveTo(x,y) else path.lineTo(x,y)
+
+        }
 
 
 
+        path.close()
 
 
+    }
 
 
     override fun onDraw(canvas: Canvas) {
@@ -429,19 +485,7 @@ class ShapeView @JvmOverloads constructor(
         borderPath.lineTo(x1, y2)
         borderPath.close()
 
-//        val multiplicationFactor = 0.293;
-//
-//        val inx1 = ((w - (w * multiplicationFactor)) / 2) + x1
-//        val iny1 = ((h - (h * multiplicationFactor)) / 2) + y1
-//
-//        val inx2 = inx1 + w * multiplicationFactor
-//        val iny2 = iny1 + h * multiplicationFactor
-//
-//        borderPath.moveTo(inx1.toFloat(), iny1.toFloat())
-//        borderPath.lineTo(inx2.toFloat(), iny1.toFloat())
-//        borderPath.lineTo(inx2.toFloat(), iny2.toFloat())
-//        borderPath.lineTo(inx1.toFloat(), iny2.toFloat())
-//        borderPath.close()
+
 
     }
 

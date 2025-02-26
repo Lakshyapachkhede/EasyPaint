@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
         Item("ArrowMark", R.drawable.arrow_mark, DrawingView.Tools.ARROW_MARK),
         Item("ArrowDouble", R.drawable.arrow_double, DrawingView.Tools.ARROW_DOUBLE),
         Item("ArrowOutline", R.drawable.arrow_outline, DrawingView.Tools.ARROW),
+        Item("ArrowOutlineUP", R.drawable.arrow_outline2, DrawingView.Tools.ARROW2),
         Item("StarFour", R.drawable.star_four, DrawingView.Tools.STAR_FOUR),
         Item("StarFive", R.drawable.star, DrawingView.Tools.STAR_FIVE),
         Item("StarSix", R.drawable.star2, DrawingView.Tools.STAR_SIX),
