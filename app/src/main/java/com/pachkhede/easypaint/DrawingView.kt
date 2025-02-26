@@ -32,7 +32,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     enum class Tools {
         SOLID_BRUSH, CALLIGRAPHY_BRUSH, SPRAY_BRUSH, BLUR_BRUSH, EMBOSS_BRUSH, DOTTED_BRUSH, NEON_BRUSH, PATTERN_BRUSH,
         ERASER, FILL, TEXT,
-        LINE, CIRCLE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW_DOUBLE, ARROW, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING, PENCIL
+        LINE, CIRCLE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW_DOUBLE, ARROW, ARROW2, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING, PENCIL
     }
 
     private val shapes = listOf(
@@ -47,6 +47,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         Tools.HEXAGON,
         Tools.ARROW_MARK,
         Tools.ARROW,
+        Tools.ARROW2,
         Tools.ARROW_DOUBLE,
         Tools.STAR_FOUR,
         Tools.STAR_FIVE,
@@ -60,8 +61,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     // Drawing View Variables
     private var path = Path()
     private var paint = Paint()
-    private val bitmapStack = Stack<Bitmap>()
-    private val redoBitmapStack = Stack<Bitmap>()
+    private val pathStack = Stack<Pair<Path, Paint>>()
+    private val redoPathStack = Stack<Pair<Path, Paint>>()
     private var bitmap: Bitmap? = null
     private var canvas: Canvas? = null
     var tool: Tools = Tools.SOLID_BRUSH
@@ -85,15 +86,20 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private fun initBitmap() {
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         canvas = Canvas(bitmap!!)
-        bitmapStack.push(bitmap!!.copy(Bitmap.Config.ARGB_8888, true))
+        canvas?.drawColor(backColor)
+
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-
+//
         bitmap?.let {
             canvas.drawBitmap(it, 0f, 0f, null)
         }
+//        for ((path, paint) in pathStack) {
+//            canvas.drawPath(path, paint)
+//        }
+
         if (isDrawingShape) {
             shapeView?.draw(canvas)
         }
@@ -189,8 +195,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             }
 
             ShapeView.ShapeRegion.INSIDE -> {
-                var x3 = touchX - lastTouchX
-                var y3 = touchY - lastTouchY
+                val x3 = touchX - lastTouchX
+                val y3 = touchY - lastTouchY
                 shapeView?.setPosition(x3 - shapeView?.w!! / 2, y3 - shapeView?.h!! / 2)
             }
 
@@ -205,15 +211,16 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private fun addShapeToBitmap() {
         shapeView?.let {
             canvas?.drawPath(it.path, it.paint)
+            pathStack.add(Pair(it.path, it.paint))
             shapeView = null
-            pushBitmap()
+
         }
     }
 
-    private fun pushBitmap() {
-        bitmapStack.push(bitmap!!.copy(Bitmap.Config.ARGB_8888, true))
-        refresh()
-    }
+
+
+
+
 
     fun changeTool(newTool: Tools) {
         if (tool == Tools.ERASER && newTool != Tools.ERASER) {
@@ -284,17 +291,36 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         canvas = Canvas(bitmap!!)
         canvas!!.drawColor(backColor)
-        bitmapStack.clear()
-        redoBitmapStack.clear()
+        pathStack.clear()
+        redoPathStack.clear()
         shapeView = null
         path.reset()
-        pushBitmap()
+    }
+
+    private fun refreshBitmap() {
+        // Recreate the bitmap and canvas
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        canvas = Canvas(bitmap!!)
+
+        // Redraw the background color
+        canvas?.drawColor(backColor)
+
+        // Redraw all paths from the pathStack
+        for ((path, paint) in pathStack) {
+            canvas?.drawPath(path, paint)
+        }
+
+        // Redraw the current path if it exists
+        canvas?.drawPath(path, paint)
+
+        // Invalidate the view to trigger a redraw
+        invalidate()
     }
 
     fun undo() {
-        if (bitmapStack.size > 1) {
-            redoBitmapStack.push(bitmapStack.pop())
-            refresh()
+        if (pathStack.isNotEmpty()) {
+            redoPathStack.push(pathStack.pop())
+            refreshBitmap()
         }
         else {
             Toast.makeText(context, "No more Undo!", Toast.LENGTH_SHORT).show()
@@ -303,19 +329,14 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
 
     fun redo() {
-        if (redoBitmapStack.isNotEmpty()) {
-            bitmapStack.push(redoBitmapStack.pop())
-            refresh()
+        if (redoPathStack.isNotEmpty())
+        {
+            pathStack.push(redoPathStack.pop())
+            refreshBitmap()
         }
         else {
             Toast.makeText(context, "No more Redo!", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun refresh() {
-        bitmap = bitmapStack.peek().copy(Bitmap.Config.ARGB_8888, true)
-        canvas = Canvas(bitmap!!)
-        invalidate()
     }
 
     fun getBitmap(): Bitmap {
@@ -330,47 +351,14 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         clearCanvas()
     }
 
-    private fun floodFill(x: Int, y: Int, targetColor: Int, replacementColor: Int) {
-        if (targetColor == replacementColor) return  // No need to fill if same color
 
-        val width = bitmap!!.width
-        val height = bitmap!!.height
-        val pixels = IntArray(width * height)  // Store pixels in an array
-        bitmap!!.getPixels(pixels, 0, width, 0, 0, width, height)  // Bulk read pixels
-
-        val queue: Deque<Point> = LinkedList()
-        // Kotlin infers the type
-        queue.add(Point(x, y))
-
-        while (queue.isNotEmpty()) {
-            val (px, py) = queue.pop()
-
-            // Boundary check
-            if (px !in 0 until width || py !in 0 until height) continue
-
-            val index = py * width + px
-            if (pixels[index] != targetColor) continue  // Skip non-target colors
-
-            pixels[index] = replacementColor  // Apply new color
-
-            queue.add(Point(px, py + 1))  // Down
-            queue.add(Point(px, py - 1))  // Up
-            queue.add(Point(px + 1, py))  // Right
-            queue.add(Point(px - 1, py))  // Left
-        }
-
-        // Bulk update pixels in the bitmap
-        bitmap!!.setPixels(pixels, 0, width, 0, 0, width, height)
-
-        invalidate()  // Redraw the canvas
-    }
 
 
     private fun touchDown(touchX: Float, touchY: Float) {
+
         when (tool) {
             Tools.SOLID_BRUSH, Tools.ERASER -> {
                 path = Path().apply { moveTo(touchX, touchY) }
-                paint = Paint(paint)
             }
 
             Tools.FILL -> {
@@ -380,8 +368,6 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                     bitmap!!.getPixel(touchX.toInt(), touchY.toInt()),
                     paint.color
                 )
-                pushBitmap()
-
             }
 
 
@@ -403,8 +389,10 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         when (tool) {
             Tools.SOLID_BRUSH, Tools.ERASER -> {
                 canvas?.drawPath(path, paint)
-                pushBitmap()
+                pathStack.add(Pair(path, paint))
 
+                path = Path()
+                paint = Paint(paint)
             }
 
 
@@ -414,9 +402,47 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
         }
 
-
-        path.reset()
+        invalidate()
     }
 
+    private fun floodFill(x: Int, y: Int, targetColor: Int, replacementColor: Int) {
+        if (targetColor == replacementColor) return  // No need to fill if same color
+
+        val width = bitmap!!.width
+        val height = bitmap!!.height
+        val pixels = IntArray(width * height)  // Store pixels in an array
+        bitmap!!.getPixels(pixels, 0, width, 0, 0, width, height)  // Bulk read pixels
+
+        val queue: Deque<Point> = LinkedList()
+        queue.add(Point(x, y))
+        path.reset()
+        path.moveTo(x.toFloat(), y.toFloat())
+
+        while (queue.isNotEmpty()) {
+            val (px, py) = queue.pop()
+
+            // Boundary check
+            if (px !in 0 until width || py !in 0 until height) continue
+
+            val index = py * width + px
+            if (pixels[index] != targetColor) continue  // Skip non-target colors
+
+            pixels[index] = replacementColor  // Apply new color
+            path.lineTo(px.toFloat(), py.toFloat())
+
+            queue.add(Point(px, py + 1))  // Down
+            queue.add(Point(px, py - 1))  // Up
+            queue.add(Point(px + 1, py))  // Right
+            queue.add(Point(px - 1, py))  // Left
+        }
+
+        path.close()
+
+        pathStack.add(Pair(path, paint))
+        canvas?.drawPath(path, paint)
+
+
+        invalidate()  // Redraw the canvas
+    }
 
 }
