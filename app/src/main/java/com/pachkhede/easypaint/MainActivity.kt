@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         Item("Chat", R.drawable.chat, DrawingView.Tools.CHAT),
         Item("Heart", R.drawable.heart, DrawingView.Tools.HEART),
         Item("Lightning", R.drawable.lightning, DrawingView.Tools.LIGHTNING),
-        Item("Pencil", R.drawable.pencil, DrawingView.Tools.PENCIL),
+
     )
 
 

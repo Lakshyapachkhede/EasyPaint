@@ -16,6 +16,7 @@ import java.lang.Math.pow
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sin
@@ -53,8 +54,8 @@ class ShapeView @JvmOverloads constructor(
     }
 
     private var borderPath = Path()
-    var w = x2 - x1
-    var h = y2 - y1
+    var w = abs(x2 - x1)
+    var h = abs(y2 - y1)
 
 //    var rotationAngle = 0f
 
@@ -98,6 +99,8 @@ class ShapeView @JvmOverloads constructor(
             Tools.STAR_SIX -> drawStarSix()
 
             Tools.HEART -> drawHeart()
+
+            Tools.CHAT -> drawChat()
 
             else -> {
 
@@ -357,8 +360,8 @@ class ShapeView @JvmOverloads constructor(
         // inner rectangle calculation
         val multiplicationFactor = 0.293
 
-        val inx1 = ((w - (w * multiplicationFactor)) / 2) + x1
-        val iny1 = ((h - (h * multiplicationFactor)) / 2) + y1
+        val inx1 = ((w - (w * multiplicationFactor)) / 2) + min(x1, x2)
+        val iny1 = ((h - (h * multiplicationFactor)) / 2) + min(y1, y2)
 
         val inx2 = inx1 + w * multiplicationFactor
         val iny2 = iny1 + h * multiplicationFactor
@@ -451,18 +454,36 @@ class ShapeView @JvmOverloads constructor(
 
         for (i in 0..360) {
             val t = Math.toRadians(i.toDouble())
-            val x = (sqrt(2.0) * sin(t).toDouble().pow(3)).toFloat()
-            val y = (-cos(t).pow(3)  -cos(t).pow(2) + 2 * cos(t)).toFloat()
-
-            if (i == 0) path.moveTo(x,y) else path.lineTo(x,y)
-
+            val x = ((sqrt(2.0) * sin(t).toDouble().pow(3)).toFloat() * w / 2) + min(x1, x2) + w / 2
+            val y = ((-cos(t).pow(3) + cos(t).pow(2) + 2 * cos(t)).toFloat() * h / 2) + (min(y1, y2) - h * 0.2) + (h / 2)
+            if (i == 0) path.moveTo(x, y.toFloat()) else path.lineTo(x, y.toFloat())
         }
-
-
 
         path.close()
 
+    }
 
+    private fun drawChat() {
+
+        path.moveTo(getEllipsePoints(0).first.toFloat(), getEllipsePoints(0).second.toFloat())
+
+        for (i in 0..250) {
+            val point = getEllipsePoints(i)
+            path.lineTo(point.first.toFloat(), point.second.toFloat())
+        }
+
+
+        path.lineTo(getEllipsePoints(250).first.toFloat(), (max(y2, y1) + h * 0.3).toFloat())
+
+        path.lineTo(getEllipsePoints(270).first.toFloat(), getEllipsePoints(270).second.toFloat())
+
+
+        for (i in 270..360) {
+            val point = getEllipsePoints(i)
+            path.lineTo(point.first.toFloat(), point.second.toFloat())
+        }
+
+        path.close()
     }
 
 
@@ -477,6 +498,7 @@ class ShapeView @JvmOverloads constructor(
         canvas.restore()
     }
 
+
     private fun drawBorder() {
         borderPath.reset()
         borderPath.moveTo(x1, y1)
@@ -484,8 +506,6 @@ class ShapeView @JvmOverloads constructor(
         borderPath.lineTo(x2, y2)
         borderPath.lineTo(x1, y2)
         borderPath.close()
-
-
 
     }
 
