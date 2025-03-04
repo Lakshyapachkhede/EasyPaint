@@ -1,6 +1,5 @@
 package com.pachkhede.easypaint
 
-import android.R.attr
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -11,8 +10,6 @@ import android.graphics.Point
 import android.util.AttributeSet
 import android.view.View
 import com.pachkhede.easypaint.DrawingView.Tools
-import kotlinx.coroutines.flow.emptyFlow
-import java.lang.Math.pow
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -101,6 +98,8 @@ class ShapeView @JvmOverloads constructor(
             Tools.HEART -> drawHeart()
 
             Tools.CHAT -> drawChat()
+
+            Tools.LIGHTNING -> drawLightning()
 
             else -> {
 
@@ -487,6 +486,35 @@ class ShapeView @JvmOverloads constructor(
     }
 
 
+    private fun drawLightning() {
+        path.reset()
+
+        path.moveTo((min(x1, x2) + w * 0.4).toFloat(), min(y1, y2))
+
+        path.lineTo(min(x1, x2), (min(y1, y2) + h * 0.2).toFloat())
+
+        path.lineTo((min(x1, x2) + w * 0.35).toFloat(), (min(y1, y2) + h * 0.4).toFloat())
+
+
+        path.lineTo((min(x1, x2) + w * 0.25).toFloat(), (min(y1, y2) + h * 0.45).toFloat())
+
+        path.lineTo((min(x1, x2) + w * 0.55).toFloat(), (min(y1, y2) + h * 0.63).toFloat())
+
+        path.lineTo((min(x1, x2) + w * 0.47).toFloat(), (min(y1, y2) + h * 0.68).toFloat())
+
+        path.lineTo(max(x1,x2), max(y1,y2))
+
+        path.lineTo((min(x1, x2) + w * 0.68).toFloat(), (min(y1, y2) + h * 0.58).toFloat())
+
+        path.lineTo((min(x1, x2) + w * 0.75).toFloat(), (min(y1, y2) + h * 0.55).toFloat())
+
+        path.lineTo((min(x1, x2) + w * 0.51).toFloat(), (min(y1, y2) + h * 0.31).toFloat())
+
+        path.lineTo((min(x1, x2) + w * 0.58).toFloat(), (min(y1, y2) + h * 0.27).toFloat())
+
+        path.close()
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.save()
@@ -621,5 +649,6 @@ class ShapeView @JvmOverloads constructor(
     ): Boolean {
         return ty in (top - touchMargin)..(bottom + touchMargin) && abs(tx - x) <= touchMargin
     }
+
 }
 

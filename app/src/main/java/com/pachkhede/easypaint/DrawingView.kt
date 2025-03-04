@@ -11,21 +11,14 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
-import androidx.annotation.ColorRes
+
 import androidx.core.graphics.component1
 import androidx.core.graphics.component2
-import androidx.core.graphics.get
-import com.google.android.material.internal.TouchObserverFrameLayout
+
 import java.util.Deque
 import java.util.LinkedList
-import java.util.Queue
 import java.util.Stack
-import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
+
 
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
@@ -189,9 +182,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             }
 
             ShapeView.ShapeRegion.INSIDE -> {
-                var x3 = touchX - lastTouchX
-                var y3 = touchY - lastTouchY
-                shapeView?.setPosition(x3 - shapeView?.w!! / 2, y3 - shapeView?.h!! / 2)
+
+                shapeView?.setPosition(touchX - shapeView?.w!! / 2, touchY - shapeView?.h!! / 2)
             }
 
             ShapeView.ShapeRegion.OUTSIDE -> {
