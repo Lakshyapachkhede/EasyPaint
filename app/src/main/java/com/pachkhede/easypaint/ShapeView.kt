@@ -453,9 +453,9 @@ class ShapeView @JvmOverloads constructor(
 
         for (i in 0..360) {
             val t = Math.toRadians(i.toDouble())
-            val x = ((sqrt(2.0) * sin(t).toDouble().pow(3)).toFloat() * w / 2) + min(x1, x2) + w / 2
-            val y = ((-cos(t).pow(3) + cos(t).pow(2) + 2 * cos(t)).toFloat() * h / 2) + (min(y1, y2) - h * 0.2) + (h / 2)
-            if (i == 0) path.moveTo(x, y.toFloat()) else path.lineTo(x, y.toFloat())
+            val x = ((sqrt(2.0) * sin(t).toDouble().pow(3)).toFloat() * w / 3f) + min(x1, x2) + (w / 2)
+            val y = ((-cos(t).pow(3) + cos(t).pow(2) + 2 * cos(t)).toFloat() * h / 3f) + (min(y1, y2) - h * 0.3f) + (h / 2)
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
 
         path.close()
@@ -576,13 +576,13 @@ class ShapeView @JvmOverloads constructor(
     fun setTop(y: Float) {
 //        y1 = y
         if (y1 < y2) y1 = y else y2 = y
-        h = y2 - y1
+        h = abs(y2 - y1)
     }
 
     fun setBottom(y: Float) {
 //        y2 = y
         if (y2 > y1) y2 = y else y1 = y
-        h = y2 - y1
+        h = abs(y2 - y1)
 
 
     }
@@ -590,13 +590,13 @@ class ShapeView @JvmOverloads constructor(
     fun setLeft(x: Float) {
 //        x1 = x
         if (x1 < x2) x1 = x else x2 = x
-        w = x2 - x1
+        w = abs(x2 - x1)
     }
 
     fun setRight(x: Float) {
 //        x2 = x
         if (x2 > x1) x2 = x else x1 = x
-        w = x2 - x1
+        w = abs(x2 - x1)
     }
 
     fun getTouchShapeRegion(touchX: Float, touchY: Float): ShapeRegion {

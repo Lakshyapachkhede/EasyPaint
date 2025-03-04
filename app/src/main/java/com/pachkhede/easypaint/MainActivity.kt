@@ -1,24 +1,34 @@
 package com.pachkhede.easypaint
 
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.ContentValues
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
-import android.media.MediaMetadataRetriever.BitmapParams
+import android.graphics.ImageDecoder
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.MediaStore
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import android.widget.Button
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
@@ -26,17 +36,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
-import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
-import kotlin.math.abs
-import android.Manifest
-import android.content.ContentValues
-import android.content.pm.PackageManager
-import android.provider.MediaStore
-import android.widget.ScrollView
-import android.widget.TextView
-import org.w3c.dom.Text
 
 
 class MainActivity : AppCompatActivity() {
@@ -124,6 +124,10 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<ImageView>(R.id.save).setOnClickListener {
             saveDrawing()
+        }
+
+        findViewById<ImageView>(R.id.image).setOnClickListener {
+            openGallery()
         }
 
         findViewById<ImageView>(R.id.shapes).setOnClickListener {
@@ -295,6 +299,32 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "Storage permission denied!", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun openGallery(){
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        intent.type = "image/*"
+        resultLauncher.launch(intent)
+    }
+    var resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data : Intent? = result.data
+            val imageUri : Uri? = data?.data
+            if (imageUri != null){
+                val bitmap = uriToBitmap(imageUri)
+                drawingView.setBackgroundImage(bitmap)
+            }
+
+        }
+    }
+
+    private fun uriToBitmap(uri: Uri): Bitmap {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val source = ImageDecoder.createSource(contentResolver, uri)
+            ImageDecoder.decodeBitmap(source)
+        } else {
+            MediaStore.Images.Media.getBitmap(contentResolver, uri)
         }
     }
 

@@ -11,7 +11,7 @@
         android:id="@+id/drawingView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/white" />
+        android:background="#efefef" />
 
     <ScrollView
         android:id="@+id/sideMenu"
@@ -132,6 +132,14 @@
                 android:layout_gravity="center"
                 android:layout_marginBottom="20dp"
                 android:src="@drawable/save" />
+
+            <ImageView
+                android:id="@+id/image"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="20dp"
+                android:src="@drawable/image" />
 
             <LinearLayout
                 android:id="@+id/undo"

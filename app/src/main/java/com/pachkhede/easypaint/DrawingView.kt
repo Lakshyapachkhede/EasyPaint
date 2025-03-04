@@ -66,8 +66,6 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     // Shape View Variables
     private var shapeView: ShapeView? = null
-    private var lastTouchX = 0f
-    private var lastTouchY = 0f
     private var shapeViewRegion = ShapeView.ShapeRegion.OUTSIDE
     private var isDrawingShape = false
 
@@ -78,6 +76,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private fun initBitmap() {
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         canvas = Canvas(bitmap!!)
+        canvas!!.drawColor(backColor)
         bitmapStack.push(bitmap!!.copy(Bitmap.Config.ARGB_8888, true))
     }
 
@@ -109,13 +108,12 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 touchDown(touchX, touchY)
 
 
-                if (shapeView == null){
+                if (shapeView == null) {
                     shapeViewRegion = ShapeView.ShapeRegion.OUTSIDE
-                }else {
+                } else {
                     shapeView?.let { shapeViewRegion = it.getTouchShapeRegion(touchX, touchY) }
                 }
-                if (isDrawingShape && shapeViewRegion == ShapeView.ShapeRegion.OUTSIDE && shapeView != null)
-                {
+                if (isDrawingShape && shapeViewRegion == ShapeView.ShapeRegion.OUTSIDE && shapeView != null) {
                     addShapeToBitmap()
                 }
 
@@ -287,8 +285,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         if (bitmapStack.size > 1) {
             redoBitmapStack.push(bitmapStack.pop())
             refresh()
-        }
-        else {
+        } else {
             Toast.makeText(context, "No more Undo!", Toast.LENGTH_SHORT).show()
         }
     }
@@ -298,8 +295,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         if (redoBitmapStack.isNotEmpty()) {
             bitmapStack.push(redoBitmapStack.pop())
             refresh()
-        }
-        else {
+        } else {
             Toast.makeText(context, "No more Redo!", Toast.LENGTH_SHORT).show()
         }
     }
@@ -311,6 +307,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     fun getBitmap(): Bitmap {
+        shapeView?.let {
+            addShapeToBitmap()
+        }
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         draw(canvas)
@@ -408,6 +407,26 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
 
         path.reset()
+    }
+
+    fun setBackgroundImage(image: Bitmap) {
+        val imageRatio = image.width.toFloat() / image.height.toFloat()
+
+        val imageBitmap = Bitmap.createScaledBitmap(
+            (image.copy(Bitmap.Config.ARGB_8888, true)),
+            width,
+            (width / imageRatio).toInt(),
+            false
+        )
+
+
+        bitmap = imageBitmap
+        canvas = Canvas(bitmap!!)
+        bitmapStack.clear()
+        redoBitmapStack.clear()
+        shapeView = null
+        path.reset()
+        pushBitmap()
     }
 
 
