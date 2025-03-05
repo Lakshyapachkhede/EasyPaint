@@ -107,10 +107,12 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        findViewById<ImageView>(R.id.pen).setOnClickListener {
-            img = R.drawable.pen
-            imgView.setImageResource(img)
-            drawingView.changeTool(DrawingView.Tools.SOLID_BRUSH)
+        findViewById<ImageView>(R.id.brush).setOnClickListener {
+//            img = R.drawable.pen
+//            imgView.setImageResource(img)
+//            drawingView.changeTool(DrawingView.Tools.SOLID_BRUSH)
+
+
         }
 
         findViewById<ImageView>(R.id.eraser).setOnClickListener {
@@ -200,11 +202,14 @@ class MainActivity : AppCompatActivity() {
         val seekBar = view.findViewById<SeekBar>(R.id.widthSeekBar)
         val progressTv = view.findViewById<TextView>(R.id.seekBarIndicator)
 
+        seekBar.progress = drawingView.currStrokeWidth.toInt()
+        progressTv.text = drawingView.currStrokeWidth.toInt().toString()
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 findViewById<TextView>(R.id.seekBarIndicator).text = p1.toString()
                 progressTv.text = p1.toString()
+                drawingView.changeBrushSize(seekBar.progress.toFloat())
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
@@ -212,7 +217,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onStopTrackingTouch(p0: SeekBar?) {
-                drawingView.changeBrushSize(seekBar.progress.toFloat())
+
             }
 
         })

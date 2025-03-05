@@ -59,7 +59,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private var canvas: Canvas? = null
     var tool: Tools = Tools.SOLID_BRUSH
     private var currColor: Int = Color.BLACK
-    private var currStrokeWidth: Float = 8f
+    var currStrokeWidth: Float = 8f
     private var backColor: Int = Color.WHITE
     private var x1: Float = 0f
     private var y1: Float = 0f
