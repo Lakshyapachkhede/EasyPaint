@@ -15,10 +15,12 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -33,6 +35,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
@@ -43,7 +46,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var drawingView: DrawingView
     private lateinit var sideMenu: ScrollView
-    private lateinit var thicknessSeekBar: SeekBar
+//    private lateinit var thicknessSeekBar: SeekBar
     private lateinit var colorIndicator: View
     private lateinit var backColorIndicator: View
     private lateinit var mainView: ConstraintLayout
@@ -88,16 +91,20 @@ class MainActivity : AppCompatActivity() {
 
         drawingView = findViewById(R.id.drawingView)
         sideMenu = findViewById(R.id.sideMenu)
-        thicknessSeekBar = findViewById(R.id.thicknessSeekBar)
+//        thicknessSeekBar = findViewById(R.id.thicknessSeekBar)
         colorIndicator = findViewById(R.id.colorIndicator)
         backColorIndicator = findViewById(R.id.backColorIndicator)
         mainView = findViewById<ConstraintLayout>(R.id.main)
         imgView = ImageView(this)
 
-        thicknessSeekBarSetup()
+//        thicknessSeekBarSetup()
 
         findViewById<LinearLayout>(R.id.menuBtn).setOnClickListener {
             toggleMenu()
+        }
+        findViewById<ImageView>(R.id.width).setOnClickListener {
+            showWidthDialog()
+
         }
 
         findViewById<ImageView>(R.id.pen).setOnClickListener {
@@ -184,10 +191,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun thicknessSeekBarSetup() {
-        thicknessSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+
+
+    private fun showWidthDialog(){
+        val dialog = BottomSheetDialog(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.stroke_width_bottom_sheet, null)
+
+        val seekBar = view.findViewById<SeekBar>(R.id.widthSeekBar)
+        val progressTv = view.findViewById<TextView>(R.id.seekBarIndicator)
+
+
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 findViewById<TextView>(R.id.seekBarIndicator).text = p1.toString()
+                progressTv.text = p1.toString()
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
@@ -195,10 +212,22 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onStopTrackingTouch(p0: SeekBar?) {
-                drawingView.changeBrushSize(thicknessSeekBar.progress.toFloat())
+                drawingView.changeBrushSize(seekBar.progress.toFloat())
             }
 
         })
+
+        view.findViewById<ImageView>(R.id.addWidth).setOnClickListener{
+            seekBar.progress += 1
+        }
+
+        view.findViewById<ImageView>(R.id.substractWidth).setOnClickListener{
+            seekBar.progress -= 1
+        }
+
+        dialog.setContentView(view)
+        dialog.show()
+
     }
 
     private fun openColorPicker(isBackground: Boolean) {

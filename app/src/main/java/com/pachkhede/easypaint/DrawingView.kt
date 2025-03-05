@@ -365,15 +365,20 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             }
 
             Tools.FILL -> {
-                floodFill(
-                    touchX.toInt(),
-                    touchY.toInt(),
-                    bitmap!!.getPixel(touchX.toInt(), touchY.toInt()),
-                    paint.color
-                )
-                pushBitmap()
+                if (touchX < bitmap!!.width && touchY < bitmap!!.width) {
+                    floodFill(
+                        touchX.toInt(),
+                        touchY.toInt(),
+                        bitmap!!.getPixel(touchX.toInt(), touchY.toInt()),
+                        paint.color
+                    )
+                    pushBitmap()
+                }
+
 
             }
+
+
 
 
             else -> {}

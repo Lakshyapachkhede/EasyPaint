@@ -17,7 +17,7 @@
         android:id="@+id/sideMenu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -36,19 +36,29 @@
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:layout_gravity="center"
-                android:background="@drawable/color_indicator" />
+                android:background="@drawable/color_indicator"
+                android:layout_marginBottom="20dp"
+                />
 
-            <SeekBar
-                android:id="@+id/thicknessSeekBar"
-                android:layout_width="200dp"
-                android:layout_height="wrap_content"
+<!--            <SeekBar-->
+<!--                android:id="@+id/thicknessSeekBar"-->
+<!--                android:layout_width="200dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_gravity="center"-->
+<!--                android:layout_marginTop="100dp"-->
+<!--                android:layout_marginBottom="85dp"-->
+<!--                android:max="100"-->
+<!--                android:min="0"-->
+<!--                android:progress="8"-->
+<!--                android:rotation="270" />-->
+
+            <ImageView
+                android:id="@+id/width"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
-                android:layout_marginTop="100dp"
-                android:layout_marginBottom="85dp"
-                android:max="100"
-                android:min="0"
-                android:progress="8"
-                android:rotation="270" />
+                android:layout_marginBottom="5dp"
+                android:src="@drawable/width" />
 
             <TextView
                 android:id="@+id/seekBarIndicator"
