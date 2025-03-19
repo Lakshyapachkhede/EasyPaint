@@ -17,7 +17,7 @@
         android:id="@+id/sideMenu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -39,6 +39,14 @@
                 android:background="@drawable/color_indicator"
                 android:layout_marginBottom="20dp"
                 />
+
+            <ImageView
+                android:id="@+id/pen"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="20dp"
+                android:src="@drawable/pen" />
 
 
             <ImageView
@@ -211,5 +219,7 @@
             android:src="@drawable/menu_icon" />
 
     </LinearLayout>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

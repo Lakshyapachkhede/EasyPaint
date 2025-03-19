@@ -2,8 +2,13 @@ package com.pachkhede.easypaint
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.CornerPathEffect
+import android.graphics.DashPathEffect
+import android.graphics.DiscretePathEffect
+import android.graphics.EmbossMaskFilter
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Point
@@ -18,12 +23,14 @@ import androidx.core.graphics.component2
 import java.util.Deque
 import java.util.LinkedList
 import java.util.Stack
+import androidx.core.graphics.get
+import kotlin.random.Random
 
 
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     enum class Tools {
-        SOLID_BRUSH, CALLIGRAPHY_BRUSH, SPRAY_BRUSH, BLUR_BRUSH, EMBOSS_BRUSH, DOTTED_BRUSH, NEON_BRUSH, PATTERN_BRUSH,
+        SOLID_BRUSH, CALLIGRAPHY_BRUSH, SPRAY_BRUSH, SPRAY_BRUSH_CAN, BLUR_BRUSH, DASHED_BRUSH, NEON_BRUSH,
         ERASER, FILL, TEXT,
         LINE, CIRCLE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW_DOUBLE, ARROW, ARROW2, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING
     }
@@ -50,6 +57,16 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         Tools.LIGHTNING,
     )
 
+    private val brushes = listOf(
+        Tools.SOLID_BRUSH,
+        Tools.CALLIGRAPHY_BRUSH,
+        Tools.SPRAY_BRUSH,
+        Tools.SPRAY_BRUSH_CAN,
+        Tools.BLUR_BRUSH,
+        Tools.DASHED_BRUSH,
+        Tools.NEON_BRUSH,
+    )
+
     // Drawing View Variables
     private var path = Path()
     private var paint = Paint()
@@ -69,6 +86,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private var shapeViewRegion = ShapeView.ShapeRegion.OUTSIDE
     private var isDrawingShape = false
 
+
     init {
         changeTool(Tools.SOLID_BRUSH)
     }
@@ -78,6 +96,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         canvas = Canvas(bitmap!!)
         canvas!!.drawColor(backColor)
         bitmapStack.push(bitmap!!.copy(Bitmap.Config.ARGB_8888, true))
+        Toast.makeText(context, "$width x $height", Toast.LENGTH_SHORT).show()
+
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -215,16 +235,29 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             addShapeToBitmap()
         }
 
+
+
         tool = newTool
         if (tool in shapes) {
             isDrawingShape = true
+            changeBrushToSolid()
         } else {
             isDrawingShape = false
+
         }
 
         when (newTool) {
             Tools.SOLID_BRUSH -> changeBrushToSolid()
             Tools.ERASER -> useEraser()
+
+            Tools.CALLIGRAPHY_BRUSH -> changeBrushToCalligraphy()
+            Tools.DASHED_BRUSH -> changeBrushToDashed()
+            Tools.NEON_BRUSH -> changeBrushToNeon()
+            Tools.SPRAY_BRUSH_CAN -> changeBrushToSprayCan()
+            Tools.SPRAY_BRUSH -> {
+                changeBrushToSolid() // to reset effects from other brushes drawing is done in onTouchMove
+            }
+            Tools.BLUR_BRUSH -> changeBrushToBlur()
 
             else -> {}
 
@@ -241,6 +274,79 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
             isAntiAlias = true
+            pathEffect = null
+            maskFilter = null
+        }
+    }
+
+    private fun changeBrushToCalligraphy() {
+        paint = Paint().apply {
+            strokeWidth = currStrokeWidth
+            color = currColor
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.SQUARE
+            strokeJoin = Paint.Join.BEVEL
+            isAntiAlias = true
+            pathEffect = CornerPathEffect(10f)
+            maskFilter = null
+        }
+    }
+
+
+    private fun changeBrushToDashed() {
+
+
+        paint = Paint().apply {
+            strokeWidth = currStrokeWidth
+            color = currColor
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+            isAntiAlias = true
+            maskFilter = null
+            pathEffect =
+                DashPathEffect(floatArrayOf(5f * currStrokeWidth, 3f * currStrokeWidth), 0f)
+        }
+    }
+
+
+    private fun changeBrushToSprayCan() {
+
+
+        paint = Paint().apply {
+            strokeWidth = currStrokeWidth
+            color = currColor
+            style = Paint.Style.FILL_AND_STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+            maskFilter = BlurMaskFilter(strokeWidth, BlurMaskFilter.Blur.NORMAL)
+            pathEffect = null
+
+        }
+    }
+
+    private fun changeBrushToNeon() {
+        paint = Paint().apply {
+            strokeWidth = currStrokeWidth
+            color = currColor
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+            style = Paint.Style.STROKE
+            maskFilter = BlurMaskFilter(strokeWidth, BlurMaskFilter.Blur.OUTER)
+            pathEffect = null
+        }
+    }
+
+    private fun changeBrushToBlur() {
+        paint = Paint().apply {
+            color = currColor
+            strokeWidth = currStrokeWidth
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+            isAntiAlias = true
+            alpha = 80 // Make it semi-transparent for a smoother blur effect
+            maskFilter = BlurMaskFilter(strokeWidth, BlurMaskFilter.Blur.NORMAL) // Apply blur effect
         }
     }
 
@@ -267,6 +373,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     fun changeBrushSize(size: Float) {
         currStrokeWidth = size
         paint.strokeWidth = size
+        if (tool in brushes) {
+            changeTool(tool)
+        }
         invalidate()
     }
 
@@ -359,26 +468,26 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     private fun touchDown(touchX: Float, touchY: Float) {
         when (tool) {
-            Tools.SOLID_BRUSH, Tools.ERASER -> {
+            Tools.SOLID_BRUSH, Tools.ERASER, Tools.CALLIGRAPHY_BRUSH, Tools.DASHED_BRUSH, Tools.NEON_BRUSH, Tools.SPRAY_BRUSH_CAN,  Tools.BLUR_BRUSH  -> {
                 path = Path().apply { moveTo(touchX, touchY) }
                 paint = Paint(paint)
             }
 
             Tools.FILL -> {
-                if (touchX < bitmap!!.width && touchY < bitmap!!.width) {
+                if (touchX < bitmap!!.width && touchY < bitmap!!.height &&
+                    bitmap!![touchX.toInt(), touchY.toInt()] != paint.color
+                ) {
+
                     floodFill(
                         touchX.toInt(),
                         touchY.toInt(),
-                        bitmap!!.getPixel(touchX.toInt(), touchY.toInt()),
+                        bitmap!![touchX.toInt(), touchY.toInt()],
                         paint.color
                     )
                     pushBitmap()
+
                 }
-
-
             }
-
-
 
 
             else -> {}
@@ -387,8 +496,18 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     private fun touchMove(touchX: Float, touchY: Float) {
         when (tool) {
-            Tools.SOLID_BRUSH, Tools.ERASER -> {
+            Tools.SOLID_BRUSH, Tools.ERASER, Tools.CALLIGRAPHY_BRUSH, Tools.DASHED_BRUSH, Tools.NEON_BRUSH, Tools.SPRAY_BRUSH_CAN, Tools.BLUR_BRUSH  -> {
                 path.lineTo(touchX, touchY)
+            }
+
+            Tools.SPRAY_BRUSH -> {
+                val random = java.util.Random()
+                for (i in 0..5) {
+                    val offsetX = random.nextInt(20) - 10
+                    val offsetY = random.nextInt(20) - 10
+                    path.addCircle(touchX + offsetX, touchY + offsetY, 1f, Path.Direction.CW)
+                }
+
             }
 
             else -> {}
@@ -397,7 +516,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     private fun touchUp(touchX: Float, touchY: Float) {
         when (tool) {
-            Tools.SOLID_BRUSH, Tools.ERASER -> {
+            Tools.SOLID_BRUSH, Tools.ERASER, Tools.CALLIGRAPHY_BRUSH, Tools.DASHED_BRUSH, Tools.NEON_BRUSH, Tools.SPRAY_BRUSH, Tools.SPRAY_BRUSH_CAN, Tools.BLUR_BRUSH  -> {
                 canvas?.drawPath(path, paint)
                 pushBitmap()
 

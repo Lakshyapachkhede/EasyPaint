@@ -20,9 +20,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import android.widget.ArrayAdapter
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ListView
 import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
@@ -35,6 +37,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
@@ -46,7 +50,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var drawingView: DrawingView
     private lateinit var sideMenu: ScrollView
-//    private lateinit var thicknessSeekBar: SeekBar
     private lateinit var colorIndicator: View
     private lateinit var backColorIndicator: View
     private lateinit var mainView: ConstraintLayout
@@ -89,29 +92,34 @@ class MainActivity : AppCompatActivity() {
         }
 
 
+
         drawingView = findViewById(R.id.drawingView)
         sideMenu = findViewById(R.id.sideMenu)
-//        thicknessSeekBar = findViewById(R.id.thicknessSeekBar)
         colorIndicator = findViewById(R.id.colorIndicator)
         backColorIndicator = findViewById(R.id.backColorIndicator)
         mainView = findViewById<ConstraintLayout>(R.id.main)
         imgView = ImageView(this)
 
-//        thicknessSeekBarSetup()
+
+
 
         findViewById<LinearLayout>(R.id.menuBtn).setOnClickListener {
             toggleMenu()
         }
+
+        findViewById<ImageView>(R.id.pen).setOnClickListener {
+            img = R.drawable.pen
+            imgView.setImageResource(img)
+            drawingView.changeTool(DrawingView.Tools.SOLID_BRUSH)
+        }
+
         findViewById<ImageView>(R.id.width).setOnClickListener {
             showWidthDialog()
 
         }
 
         findViewById<ImageView>(R.id.brush).setOnClickListener {
-//            img = R.drawable.pen
-//            imgView.setImageResource(img)
-//            drawingView.changeTool(DrawingView.Tools.SOLID_BRUSH)
-
+            showBrushesDialog()
 
         }
 
@@ -235,6 +243,38 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun showBrushesDialog(){
+        val dialog = BottomSheetDialog(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.brushes_bottom_sheet, null)
+
+        val recyclerView = view.findViewById<RecyclerView>(R.id.brushRecyclerView)
+
+        val items = listOf(
+            BrushItem("solid", DrawingView.Tools.SOLID_BRUSH),
+            BrushItem("calligraphy", DrawingView.Tools.CALLIGRAPHY_BRUSH),
+            BrushItem("spray", DrawingView.Tools.SPRAY_BRUSH),
+            BrushItem("air spray", DrawingView.Tools.SPRAY_BRUSH_CAN),
+            BrushItem("blur", DrawingView.Tools.BLUR_BRUSH),
+            BrushItem("dotted", DrawingView.Tools.DASHED_BRUSH),
+            BrushItem("neon", DrawingView.Tools.NEON_BRUSH),
+
+        )
+
+
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        val adapter = BrushAdapter(items) { item->
+            Toast.makeText(this, "Clicked: ${item.name}", Toast.LENGTH_SHORT).show()
+            drawingView.changeTool(item.tool)
+            dialog.dismiss()
+        }
+        recyclerView.adapter = adapter
+
+
+        dialog.setContentView(view)
+        dialog.show()
+
+    }
+
     private fun openColorPicker(isBackground: Boolean) {
         val title = if (isBackground) "Select Background Color" else "Select Color"
 
@@ -283,10 +323,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun saveDrawing() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            // Check if permission is granted
+
             if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 100)
-                return  // Stop execution until the user grants permission
+                return
             }
         }
 
@@ -300,7 +340,7 @@ class MainActivity : AppCompatActivity() {
             put(
                 MediaStore.Images.Media.RELATIVE_PATH,
                 Environment.DIRECTORY_PICTURES
-            ) // Saves to Pictures folder
+            )
         }
 
         val uri =
@@ -341,6 +381,7 @@ class MainActivity : AppCompatActivity() {
         intent.type = "image/*"
         resultLauncher.launch(intent)
     }
+
     var resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val data : Intent? = result.data
