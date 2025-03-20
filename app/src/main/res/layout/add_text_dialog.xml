@@ -1,50 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="16dp"
     android:background="@drawable/bottom_sheet_background"
-    >
+    android:orientation="vertical"
+    android:padding="16dp">
 
 
     <TextView
         android:id="@+id/dialogTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
         android:text="Add Text"
         android:textAlignment="center"
         android:textColor="@color/black"
         android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="10dp"
-        />
-
-    <EditText
-        android:id="@+id/add_text_input"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="20dp"
-        android:background="@drawable/add_text_input_background"
-        android:hint="enter your text"
-
-        />
+        android:textStyle="bold" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginTop="10dp"
+        android:orientation="horizontal"
         >
+
+        <EditText
+            android:id="@+id/add_text_input"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:background="@drawable/add_text_input_background"
+            android:hint="enter your text"
+            android:maxLength="50"
+            android:maxLines="1"
+            android:padding="20dp"
+            android:layout_marginEnd="10dp"
+
+            />
+
+        <View
+            android:id="@+id/textColorIndicator"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:background="@drawable/color_indicator"
+            />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/textSizeDecrease"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/baseline_substract_24"
             android:layout_marginStart="10dp"
-            android:padding="10dp"
             android:background="@drawable/round_back_white"
+            android:padding="10dp"
+            android:src="@drawable/baseline_substract_24"
 
             />
 
@@ -53,12 +72,12 @@
             android:id="@+id/textSizeSeekBar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:max="100"
-            android:min="0"
-            android:layout_weight="1"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="5dp"
+            android:layout_weight="1"
+            android:max="100"
+            android:min="10"
 
             />
 
@@ -67,36 +86,36 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="8"
-            android:textColor="@color/black"
-            android:textSize="20sp"
             android:layout_marginEnd="5dp"
-            />
+            android:text="40"
+            android:textColor="@color/black"
+            android:textSize="20sp" />
 
         <ImageView
             android:id="@+id/textSizeIncrease"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/baseline_add_24"
             android:layout_marginEnd="10dp"
-            android:padding="10dp"
             android:background="@drawable/round_back_white"
-            />
-
+            android:padding="10dp"
+            android:src="@drawable/baseline_add_24" />
 
 
     </LinearLayout>
 
-
-
-
-
-
-
-
-
-
-
+    <TextView
+        android:id="@+id/demoText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/add_text_input_background"
+        android:includeFontPadding="false"
+        android:paddingVertical="20dp"
+        android:paddingHorizontal="5dp"
+        android:text="Your Text Here"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="18dp" />
 
 
 </LinearLayout>

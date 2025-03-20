@@ -98,7 +98,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     val textpaint = Paint().apply {
         color = currColor
-        textSize = 8f
+        textSize = 40f
         typeface = Typeface.DEFAULT
         isAntiAlias = true
     }

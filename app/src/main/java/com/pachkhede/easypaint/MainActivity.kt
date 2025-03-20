@@ -51,6 +51,8 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import android.util.Base64
 import android.widget.EditText
+import androidx.core.widget.doAfterTextChanged
+import androidx.core.widget.doOnTextChanged
 import java.io.File
 import java.io.FileOutputStream
 
@@ -475,15 +477,17 @@ class MainActivity : AppCompatActivity() {
 
         val seekBar = view.findViewById<SeekBar>(R.id.textSizeSeekBar)
         val progressTv = view.findViewById<TextView>(R.id.textSizeIndicator)
+        val demoTextView = view.findViewById<TextView>(R.id.demoText)
+        val inputEditText = view.findViewById<EditText>(R.id.add_text_input)
+        val textColor = view.findViewById<View>(R.id.textColorIndicator)
+        val colorIndicator = view.findViewById<View>(R.id.textColorIndicator)
 
-
-        seekBar.progress = drawingView.currStrokeWidth.toInt()
-        progressTv.text = drawingView.currStrokeWidth.toInt().toString()
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 progressTv.text = p1.toString()
                 drawingView.textpaint.textSize = p1.toFloat()
+                demoTextView.textSize = pxToSp(p1.toFloat(), this@MainActivity)
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
@@ -506,18 +510,65 @@ class MainActivity : AppCompatActivity() {
         }
 
         dialog.setOnDismissListener {
-            val text = dialog.findViewById<EditText>(R.id.add_text_input)?.text.toString()
+            val text = inputEditText.text.toString()
             drawingView.text = if (text.trim() != "") text else drawingView.text
             drawingView.changeTool(Tools.TEXT)
         }
 
+        inputEditText.doAfterTextChanged { text ->
+            demoTextView.setText(if (text.isNullOrEmpty()) "Your Text" else text)
+        }
+
+        textColor.setOnClickListener {
+            val title = "Select Color"
+
+            ColorPickerDialog.Builder(this)
+                .setTitle(title)
+                .setPreferenceName("MyColorPickerDialog")
+                .setPositiveButton("Select", object : ColorEnvelopeListener {
+                    override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {
+                        envelope?.color?.let { selectedColor ->
+                            demoTextView.setTextColor(selectedColor)
+                            drawingView.textpaint.color = selectedColor
+                            colorIndicator.backgroundTintList =
+                                ColorStateList.valueOf(selectedColor)
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .attachAlphaSlideBar(true)
+                .attachBrightnessSlideBar(true)
+                .setBottomSpace(12)
+                .show()
+
+
+        }
+
         dialog.setContentView(view)
         dialog.findViewById<EditText>(R.id.add_text_input)?.setText(drawingView.text)
+        demoTextView.setText(if (drawingView.text.isNullOrEmpty()) "Your Text" else drawingView.text)
+        seekBar.progress = drawingView.currStrokeWidth.toInt()
+        progressTv.text = drawingView.currStrokeWidth.toInt().toString()
+        demoTextView.setTextColor(drawingView.textpaint.color)
+        demoTextView.textSize = pxToSp(drawingView.textpaint.textSize, this@MainActivity)
+        seekBar.progress = drawingView.textpaint.textSize.toInt()
+        colorIndicator.backgroundTintList =
+            ColorStateList.valueOf(drawingView.textpaint.color)
+        progressTv.text = drawingView.textpaint.textSize.toInt().toString()
 
         dialog.show()
 
 
     }
+
+    fun pxToSp(px: Float, context: Context): Float {
+        return px / context.resources.displayMetrics.scaledDensity
+    }
+
+
+
 
 
 }
