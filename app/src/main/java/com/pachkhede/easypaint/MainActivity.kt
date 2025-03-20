@@ -5,15 +5,18 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.PersistableBundle
 import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -44,7 +47,12 @@ import com.pachkhede.easypaint.DrawingView.Tools
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import android.util.Base64
+import android.widget.EditText
+import java.io.File
+import java.io.FileOutputStream
 
 
 class MainActivity : AppCompatActivity() {
@@ -78,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         Item("Heart", R.drawable.heart, DrawingView.Tools.HEART),
         Item("Lightning", R.drawable.lightning, DrawingView.Tools.LIGHTNING),
 
-    )
+        )
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -94,14 +102,13 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
         drawingView = findViewById(R.id.drawingView)
         sideMenu = findViewById(R.id.sideMenu)
         colorIndicator = findViewById(R.id.colorIndicator)
         backColorIndicator = findViewById(R.id.backColorIndicator)
         mainView = findViewById<ConstraintLayout>(R.id.main)
         imgView = ImageView(this)
-
-
 
 
         findViewById<LinearLayout>(R.id.menuBtn).setOnClickListener {
@@ -111,7 +118,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<ImageView>(R.id.pen).setOnClickListener {
             img = R.drawable.pen
             imgView.setImageResource(img)
-            drawingView.changeTool(DrawingView.Tools.SOLID_BRUSH)
+            drawingView.changeTool(Tools.SOLID_BRUSH)
         }
 
         findViewById<ImageView>(R.id.width).setOnClickListener {
@@ -140,6 +147,10 @@ class MainActivity : AppCompatActivity() {
             drawingView.clearCanvas()
         }
 
+        findViewById<ImageView>(R.id.text).setOnClickListener {
+            openTextDialog()
+        }
+
         findViewById<ImageView>(R.id.save).setOnClickListener {
             saveDrawing()
         }
@@ -150,7 +161,6 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<ImageView>(R.id.shapes).setOnClickListener {
             val bottomSheet = ItemBottomSheet(shapes, "Select Shape") { selectedShape ->
-                Toast.makeText(this, "Selected: ${selectedShape.name}", Toast.LENGTH_SHORT).show()
                 drawingView.changeTool(selectedShape.tool)
                 img = R.drawable.pen
                 imgView.setImageResource(img)
@@ -203,8 +213,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
-    private fun showWidthDialog(){
+    private fun showWidthDialog() {
         val dialog = BottomSheetDialog(this)
         val view = LayoutInflater.from(this).inflate(R.layout.stroke_width_bottom_sheet, null)
 
@@ -231,11 +240,11 @@ class MainActivity : AppCompatActivity() {
 
         })
 
-        view.findViewById<ImageView>(R.id.addWidth).setOnClickListener{
+        view.findViewById<ImageView>(R.id.addWidth).setOnClickListener {
             seekBar.progress += 1
         }
 
-        view.findViewById<ImageView>(R.id.substractWidth).setOnClickListener{
+        view.findViewById<ImageView>(R.id.substractWidth).setOnClickListener {
             seekBar.progress -= 1
         }
 
@@ -244,7 +253,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun showBrushesDialog(){
+    private fun showBrushesDialog() {
         val dialog = BottomSheetDialog(this)
         val view = LayoutInflater.from(this).inflate(R.layout.brushes_bottom_sheet, null)
 
@@ -263,19 +272,18 @@ class MainActivity : AppCompatActivity() {
             BrushItem("oil", DrawingView.Tools.OIL_BRUSH),
 
 
-
-        )
+            )
 
 
         recyclerView.layoutManager = LinearLayoutManager(this)
-        val adapter = BrushAdapter(items) { item->
-            if (item.tool in drawingView.brushes){
+        val adapter = BrushAdapter(items) { item ->
+            if (item.tool in drawingView.brushes) {
                 img = R.drawable.pen
                 imgView.setImageResource(img)
             }
 
             drawingView.changeTool(item.tool)
-            when(item.tool) {
+            when (item.tool) {
                 Tools.BLUR_BRUSH, Tools.OIL_BRUSH, Tools.CRAYON_BRUSH, Tools.MARKER_BRUSH -> {
                     drawingView.changeBrushSize(50f)
                     findViewById<TextView>(R.id.seekBarIndicator).text = "50"
@@ -396,23 +404,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun openGallery(){
+    private fun openGallery() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         intent.type = "image/*"
         resultLauncher.launch(intent)
     }
 
-    var resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val data : Intent? = result.data
-            val imageUri : Uri? = data?.data
-            if (imageUri != null){
-                val bitmap = uriToBitmap(imageUri)
-                drawingView.setBackgroundImage(bitmap)
-            }
+    var resultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data: Intent? = result.data
+                val imageUri: Uri? = data?.data
+                if (imageUri != null) {
+                    val bitmap = uriToBitmap(imageUri)
+                    drawingView.setBackgroundImage(bitmap)
+                }
 
+            }
         }
-    }
 
     private fun uriToBitmap(uri: Uri): Bitmap {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -423,8 +432,97 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        drawingView.post {
+            val bitmap = loadDrawingFromFile()
+            if (bitmap != null) {
+                drawingView.setBackgroundImage(bitmap)
+            } else {
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        saveDrawingToFile()
+
+    }
+
+    private fun saveDrawingToFile() {
+
+        val file = File(filesDir, getString(R.string.saved_bitmap)) // Internal storage path
+        FileOutputStream(file).use { fos ->
+            drawingView.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, fos)
+        }
+
+    }
+
+    private fun loadDrawingFromFile(): Bitmap? {
+        val file = File(filesDir, getString(R.string.saved_bitmap))
+        return if (file.exists()) {
+            BitmapFactory.decodeFile(file.absolutePath)
+        } else {
+            null
+        }
+    }
+
+
+    private fun openTextDialog() {
+        val dialog = BottomSheetDialog(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.add_text_dialog, null)
+
+        val seekBar = view.findViewById<SeekBar>(R.id.textSizeSeekBar)
+        val progressTv = view.findViewById<TextView>(R.id.textSizeIndicator)
+
+
+        seekBar.progress = drawingView.currStrokeWidth.toInt()
+        progressTv.text = drawingView.currStrokeWidth.toInt().toString()
+
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                progressTv.text = p1.toString()
+                drawingView.textpaint.textSize = p1.toFloat()
+            }
+
+            override fun onStartTrackingTouch(p0: SeekBar?) {
+
+            }
+
+            override fun onStopTrackingTouch(p0: SeekBar?) {
+
+            }
+
+        })
+
+
+        view.findViewById<ImageView>(R.id.textSizeIncrease).setOnClickListener {
+            seekBar.progress += 1
+        }
+
+        view.findViewById<ImageView>(R.id.textSizeDecrease).setOnClickListener {
+            seekBar.progress -= 1
+        }
+
+        dialog.setOnDismissListener {
+            val text = dialog.findViewById<EditText>(R.id.add_text_input)?.text.toString()
+            drawingView.text = if (text.trim() != "") text else drawingView.text
+            drawingView.changeTool(Tools.TEXT)
+        }
+
+        dialog.setContentView(view)
+        dialog.findViewById<EditText>(R.id.add_text_input)?.setText(drawingView.text)
+
+        dialog.show()
+
+
+    }
+
 
 }
+
+
 
 
 

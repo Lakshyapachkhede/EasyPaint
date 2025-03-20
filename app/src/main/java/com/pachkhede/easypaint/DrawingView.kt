@@ -18,6 +18,7 @@ import android.graphics.Point
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.Shader
+import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -95,14 +96,18 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private var shapeViewRegion = ShapeView.ShapeRegion.OUTSIDE
     private var isDrawingShape = false
 
-    private var oilShader: Shader
+    val textpaint = Paint().apply {
+        color = currColor
+        textSize = 8f
+        typeface = Typeface.DEFAULT
+        isAntiAlias = true
+    }
+
+    var text = ""
+
 
     init {
         changeTool(Tools.SOLID_BRUSH)
-        val oilTexture = BitmapFactory.decodeResource(resources, R.drawable.oil_texture)
-        oilShader = BitmapShader(oilTexture, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-
-
     }
 
     private fun initBitmap() {
@@ -110,7 +115,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         canvas = Canvas(bitmap!!)
         canvas!!.drawColor(backColor)
         bitmapStack.push(bitmap!!.copy(Bitmap.Config.ARGB_8888, true))
-        Toast.makeText(context, "$width x $height", Toast.LENGTH_SHORT).show()
+
 
     }
 
@@ -124,6 +129,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             shapeView?.draw(canvas)
         }
         canvas.drawPath(path, paint)
+
+
+
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -480,6 +488,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         if (tool != Tools.ERASER) {
             currColor = color
             paint.color = color
+            textpaint.color = color
         }
         if (tool in brushes) {
             changeTool(tool)
@@ -605,6 +614,10 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
                 }
             }
+            Tools.TEXT -> {
+                canvas?.drawText(text, touchX, touchY, textpaint)
+                pushBitmap()
+            }
 
 
             else -> {}
@@ -671,6 +684,11 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         path.reset()
         pushBitmap()
     }
+
+
+
+
+
 
 
 }

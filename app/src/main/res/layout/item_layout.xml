@@ -5,6 +5,8 @@
     android:padding="5dp"
     android:gravity="center"
     android:layout_marginBottom="5dp"
+    android:background="@drawable/add_text_input_background"
+    android:layout_margin="5dp"
     >
 
     <ImageView
@@ -13,5 +15,6 @@
         android:layout_height="40dp"
         android:src="@drawable/shape_square"
         />
+
 
 </LinearLayout>
