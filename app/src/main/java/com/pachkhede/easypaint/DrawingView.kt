@@ -2,6 +2,8 @@ package com.pachkhede.easypaint
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
 import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
@@ -9,9 +11,13 @@ import android.graphics.CornerPathEffect
 import android.graphics.DashPathEffect
 import android.graphics.DiscretePathEffect
 import android.graphics.EmbossMaskFilter
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Point
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -30,12 +36,12 @@ import kotlin.random.Random
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     enum class Tools {
-        SOLID_BRUSH, CALLIGRAPHY_BRUSH, SPRAY_BRUSH, SPRAY_BRUSH_CAN, BLUR_BRUSH, DASHED_BRUSH, NEON_BRUSH,
+        SOLID_BRUSH, CALLIGRAPHY_BRUSH, SPRAY_BRUSH, SPRAY_BRUSH_CAN, BLUR_BRUSH, DASHED_BRUSH, NEON_BRUSH, OIL_BRUSH, CRAYON_BRUSH, MARKER_BRUSH,
         ERASER, FILL, TEXT,
         LINE, CIRCLE, RECTANGLE, RECTANGLE_ROUND, TRIANGLE, RIGHT_TRIANGLE, DIAMOND, PENTAGON, HEXAGON, ARROW_MARK, ARROW_DOUBLE, ARROW, ARROW2, STAR_FOUR, STAR_FIVE, STAR_SIX, CHAT, HEART, LIGHTNING
     }
 
-    private val shapes = listOf(
+    val shapes = listOf(
         Tools.LINE,
         Tools.CIRCLE,
         Tools.RECTANGLE,
@@ -57,7 +63,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         Tools.LIGHTNING,
     )
 
-    private val brushes = listOf(
+    val brushes = listOf(
         Tools.SOLID_BRUSH,
         Tools.CALLIGRAPHY_BRUSH,
         Tools.SPRAY_BRUSH,
@@ -65,6 +71,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         Tools.BLUR_BRUSH,
         Tools.DASHED_BRUSH,
         Tools.NEON_BRUSH,
+        Tools.OIL_BRUSH,
+        Tools.CRAYON_BRUSH,
+        Tools.MARKER_BRUSH,
     )
 
     // Drawing View Variables
@@ -86,9 +95,14 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private var shapeViewRegion = ShapeView.ShapeRegion.OUTSIDE
     private var isDrawingShape = false
 
+    private var oilShader: Shader
 
     init {
         changeTool(Tools.SOLID_BRUSH)
+        val oilTexture = BitmapFactory.decodeResource(resources, R.drawable.oil_texture)
+        oilShader = BitmapShader(oilTexture, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+
+
     }
 
     private fun initBitmap() {
@@ -141,11 +155,14 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             }
 
             MotionEvent.ACTION_MOVE -> {
+
                 touchMove(touchX, touchY)
 
                 if (event.pointerCount == 1 && isDrawingShape) {
                     handleShapeTouchMove(touchX, touchY)
                 }
+
+
             }
 
             MotionEvent.ACTION_UP -> {
@@ -255,9 +272,26 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             Tools.NEON_BRUSH -> changeBrushToNeon()
             Tools.SPRAY_BRUSH_CAN -> changeBrushToSprayCan()
             Tools.SPRAY_BRUSH -> {
-                changeBrushToSolid() // to reset effects from other brushes drawing is done in onTouchMove
+                changeBrushToSolid()
+                currStrokeWidth = 2f
+                paint.strokeWidth = 2f
+                // to reset effects from other brushes drawing is done in onTouchMove
             }
-            Tools.BLUR_BRUSH -> changeBrushToBlur()
+
+            Tools.BLUR_BRUSH -> {
+                changeBrushToBlur()
+            }
+
+            Tools.OIL_BRUSH -> {
+                changeBrushToOil()
+            }
+            Tools.CRAYON_BRUSH -> {
+                changeBrushToCrayon()
+            }
+
+            Tools.MARKER_BRUSH -> {
+                changeBrushToMarker()
+            }
 
             else -> {}
 
@@ -345,11 +379,91 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
             isAntiAlias = true
-            alpha = 80 // Make it semi-transparent for a smoother blur effect
-            maskFilter = BlurMaskFilter(strokeWidth, BlurMaskFilter.Blur.NORMAL) // Apply blur effect
+            alpha = 180
+            maskFilter =
+                BlurMaskFilter(currStrokeWidth, BlurMaskFilter.Blur.SOLID) // Apply blur effect
         }
     }
 
+    private fun changeBrushToCrayon() {
+        paint = Paint().apply {
+
+            color = currColor
+            strokeWidth = currStrokeWidth
+            style = Paint.Style.STROKE
+            strokeJoin = Paint.Join.ROUND
+            strokeCap = Paint.Cap.ROUND
+            val oilTexture = BitmapFactory.decodeResource(resources, R.drawable.crayon_text_2)
+            lateinit var mShader: Shader
+
+            oilTexture?.let {
+                val textureWidth = it.width.toFloat()
+                val textureHeight = it.height.toFloat()
+
+                val scale = strokeWidth / textureHeight
+
+                val shaderMatrix = Matrix()
+
+                shaderMatrix.setScale(scale, scale)
+                shaderMatrix.postTranslate(-5f, -5f)
+
+                val shader = BitmapShader(it, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT)
+                shader.setLocalMatrix(shaderMatrix)
+
+                mShader = shader
+            }
+            shader = mShader
+            colorFilter = PorterDuffColorFilter(currColor, PorterDuff.Mode.SRC_IN)
+            isAntiAlias = true
+        }
+    }
+
+    private fun changeBrushToOil() {
+        paint = Paint().apply {
+
+            color = currColor
+            strokeWidth = currStrokeWidth
+            style = Paint.Style.STROKE
+            strokeJoin = Paint.Join.ROUND
+            strokeCap = Paint.Cap.ROUND
+            val oilTexture = BitmapFactory.decodeResource(resources, R.drawable.oil_texture)
+            lateinit var mShader: Shader
+
+            oilTexture?.let {
+                val textureWidth = it.width.toFloat()
+                val textureHeight = it.height.toFloat()
+
+                val scale = strokeWidth / textureHeight
+
+                val shaderMatrix = Matrix()
+
+                shaderMatrix.setScale(scale, scale)
+                shaderMatrix.postTranslate(-5f, -5f)
+
+                val shader = BitmapShader(it, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT)
+                shader.setLocalMatrix(shaderMatrix)
+
+                mShader = shader
+            }
+            shader = mShader
+            alpha = 200
+            colorFilter = PorterDuffColorFilter(currColor, PorterDuff.Mode.SRC_IN)
+            isAntiAlias = true
+        }
+    }
+
+    private fun changeBrushToMarker() {
+        paint = Paint().apply {
+            color = currColor
+            strokeWidth = currStrokeWidth
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.SQUARE
+            strokeJoin = Paint.Join.BEVEL
+            isAntiAlias = true
+            alpha = 150
+        }
+
+    }
 
     private fun useEraser() {
         paint = Paint().apply {
@@ -366,6 +480,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         if (tool != Tools.ERASER) {
             currColor = color
             paint.color = color
+        }
+        if (tool in brushes) {
+            changeTool(tool)
         }
         invalidate()
     }
@@ -468,7 +585,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     private fun touchDown(touchX: Float, touchY: Float) {
         when (tool) {
-            Tools.SOLID_BRUSH, Tools.ERASER, Tools.CALLIGRAPHY_BRUSH, Tools.DASHED_BRUSH, Tools.NEON_BRUSH, Tools.SPRAY_BRUSH_CAN,  Tools.BLUR_BRUSH  -> {
+            Tools.SOLID_BRUSH, Tools.OIL_BRUSH, Tools.MARKER_BRUSH, Tools.ERASER, Tools.CALLIGRAPHY_BRUSH, Tools.DASHED_BRUSH, Tools.NEON_BRUSH, Tools.SPRAY_BRUSH_CAN, Tools.BLUR_BRUSH, Tools.CRAYON_BRUSH -> {
                 path = Path().apply { moveTo(touchX, touchY) }
                 paint = Paint(paint)
             }
@@ -496,16 +613,16 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     private fun touchMove(touchX: Float, touchY: Float) {
         when (tool) {
-            Tools.SOLID_BRUSH, Tools.ERASER, Tools.CALLIGRAPHY_BRUSH, Tools.DASHED_BRUSH, Tools.NEON_BRUSH, Tools.SPRAY_BRUSH_CAN, Tools.BLUR_BRUSH  -> {
+            Tools.SOLID_BRUSH, Tools.ERASER, Tools.MARKER_BRUSH, Tools.OIL_BRUSH, Tools.CALLIGRAPHY_BRUSH, Tools.DASHED_BRUSH, Tools.NEON_BRUSH, Tools.SPRAY_BRUSH_CAN, Tools.BLUR_BRUSH, Tools.CRAYON_BRUSH -> {
                 path.lineTo(touchX, touchY)
             }
 
             Tools.SPRAY_BRUSH -> {
                 val random = java.util.Random()
-                for (i in 0..5) {
+                for (i in 0..10) {
                     val offsetX = random.nextInt(20) - 10
                     val offsetY = random.nextInt(20) - 10
-                    path.addCircle(touchX + offsetX, touchY + offsetY, 1f, Path.Direction.CW)
+                    path.addCircle(touchX + offsetX, touchY + offsetY, 0.5f, Path.Direction.CW)
                 }
 
             }
@@ -516,7 +633,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     private fun touchUp(touchX: Float, touchY: Float) {
         when (tool) {
-            Tools.SOLID_BRUSH, Tools.ERASER, Tools.CALLIGRAPHY_BRUSH, Tools.DASHED_BRUSH, Tools.NEON_BRUSH, Tools.SPRAY_BRUSH, Tools.SPRAY_BRUSH_CAN, Tools.BLUR_BRUSH  -> {
+            Tools.SOLID_BRUSH, Tools.ERASER, Tools.OIL_BRUSH, Tools.CALLIGRAPHY_BRUSH,
+            Tools.DASHED_BRUSH, Tools.NEON_BRUSH, Tools.SPRAY_BRUSH, Tools.SPRAY_BRUSH_CAN,
+            Tools.BLUR_BRUSH, Tools.CRAYON_BRUSH, Tools.MARKER_BRUSH -> {
                 canvas?.drawPath(path, paint)
                 pushBitmap()
 

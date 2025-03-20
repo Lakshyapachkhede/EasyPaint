@@ -40,6 +40,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.pachkhede.easypaint.DrawingView.Tools
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
@@ -252,19 +253,37 @@ class MainActivity : AppCompatActivity() {
         val items = listOf(
             BrushItem("solid", DrawingView.Tools.SOLID_BRUSH),
             BrushItem("calligraphy", DrawingView.Tools.CALLIGRAPHY_BRUSH),
+            BrushItem("crayon", DrawingView.Tools.CRAYON_BRUSH),
             BrushItem("spray", DrawingView.Tools.SPRAY_BRUSH),
             BrushItem("air spray", DrawingView.Tools.SPRAY_BRUSH_CAN),
-            BrushItem("blur", DrawingView.Tools.BLUR_BRUSH),
             BrushItem("dotted", DrawingView.Tools.DASHED_BRUSH),
             BrushItem("neon", DrawingView.Tools.NEON_BRUSH),
+            BrushItem("Marker", DrawingView.Tools.MARKER_BRUSH),
+            BrushItem("blur", DrawingView.Tools.BLUR_BRUSH),
+            BrushItem("oil", DrawingView.Tools.OIL_BRUSH),
+
+
 
         )
 
 
         recyclerView.layoutManager = LinearLayoutManager(this)
         val adapter = BrushAdapter(items) { item->
-            Toast.makeText(this, "Clicked: ${item.name}", Toast.LENGTH_SHORT).show()
+            if (item.tool in drawingView.brushes){
+                img = R.drawable.pen
+                imgView.setImageResource(img)
+            }
+
             drawingView.changeTool(item.tool)
+            when(item.tool) {
+                Tools.BLUR_BRUSH, Tools.OIL_BRUSH, Tools.CRAYON_BRUSH, Tools.MARKER_BRUSH -> {
+                    drawingView.changeBrushSize(50f)
+                    findViewById<TextView>(R.id.seekBarIndicator).text = "50"
+
+                }
+
+                else -> {}
+            }
             dialog.dismiss()
         }
         recyclerView.adapter = adapter
@@ -303,6 +322,7 @@ class MainActivity : AppCompatActivity() {
             .attachBrightnessSlideBar(true)
             .setBottomSpace(12)
             .show()
+
     }
 
 
