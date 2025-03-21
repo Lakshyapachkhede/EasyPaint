@@ -9,8 +9,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.CornerPathEffect
 import android.graphics.DashPathEffect
-import android.graphics.DiscretePathEffect
-import android.graphics.EmbossMaskFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
@@ -31,7 +29,7 @@ import java.util.Deque
 import java.util.LinkedList
 import java.util.Stack
 import androidx.core.graphics.get
-import kotlin.random.Random
+import kotlin.math.abs
 
 
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
@@ -96,6 +94,10 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private var shapeViewRegion = ShapeView.ShapeRegion.OUTSIDE
     private var isDrawingShape = false
 
+
+    private var prevTouchX : Float = 0f
+    private var prevTouchY : Float = 0f
+
     val textpaint = Paint().apply {
         color = currColor
         textSize = 40f
@@ -105,6 +107,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
     var text = ""
 
+    var isDrawingText = false
+
+    var mtextView : TextMoveView? = null
 
     init {
         changeTool(Tools.SOLID_BRUSH)
@@ -128,8 +133,10 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         if (isDrawingShape) {
             shapeView?.draw(canvas)
         }
+        if (isDrawingText) {
+            mtextView?.draw(canvas)
+        }
         canvas.drawPath(path, paint)
-
 
 
     }
@@ -160,6 +167,11 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 }
 
 
+                prevTouchX = touchX
+                prevTouchY = touchY
+
+
+
             }
 
             MotionEvent.ACTION_MOVE -> {
@@ -168,6 +180,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
                 if (event.pointerCount == 1 && isDrawingShape) {
                     handleShapeTouchMove(touchX, touchY)
+                } else if (event.pointerCount == 1 && isDrawingText) {
+                    handleTextTouch(touchX, touchY)
                 }
 
 
@@ -182,6 +196,23 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         }
         invalidate()
         return true
+    }
+
+    private fun handleTextTouch(touchX: Float, touchY: Float) {
+        mtextView?.let{
+            val distanceX = (touchX - prevTouchX)
+            val distanceY = (touchY - prevTouchY)
+
+            if (it.isInsideTouch(touchX, touchY) == true){
+
+
+                it.setPosition(it.x1 + distanceX, it.y1 + distanceY)
+                prevTouchX = touchX
+                prevTouchY = touchY
+            }
+        }
+
+
     }
 
     private fun handleShapeTouchMove(touchX: Float, touchY: Float) {
@@ -226,7 +257,17 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
             ShapeView.ShapeRegion.INSIDE -> {
 
-                shapeView?.setPosition(touchX - shapeView?.w!! / 2, touchY - shapeView?.h!! / 2)
+
+
+                val distanceX = (touchX - prevTouchX)
+                val distanceY = (touchY - prevTouchY)
+
+
+
+                shapeView?.setPosition((shapeView?.x1 ?: 0f) + distanceX, (shapeView?.y1 ?: 0f) + distanceY)
+
+                prevTouchX = touchX
+                prevTouchY = touchY
             }
 
             ShapeView.ShapeRegion.OUTSIDE -> {
@@ -241,6 +282,14 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         shapeView?.let {
             canvas?.drawPath(it.path, it.paint)
             shapeView = null
+            pushBitmap()
+        }
+    }
+
+    private fun addTextToBitmap() {
+        mtextView?.let {
+            canvas?.drawText(it.text, 0, it.text.length, it.x1, it.y2,it.paint,)
+            mtextView = null
             pushBitmap()
         }
     }
@@ -260,15 +309,24 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             addShapeToBitmap()
         }
 
+        mtextView?.let {
+            addTextToBitmap()
+        }
+
+
 
 
         tool = newTool
         if (tool in shapes) {
             isDrawingShape = true
+            isDrawingText = false
             changeBrushToSolid()
-        } else {
+        } else if (tool == Tools.TEXT) {
+            isDrawingText = true
             isDrawingShape = false
-
+        } else {
+            isDrawingText = false
+            isDrawingShape = false
         }
 
         when (newTool) {
@@ -293,6 +351,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             Tools.OIL_BRUSH -> {
                 changeBrushToOil()
             }
+
             Tools.CRAYON_BRUSH -> {
                 changeBrushToCrayon()
             }
@@ -300,6 +359,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             Tools.MARKER_BRUSH -> {
                 changeBrushToMarker()
             }
+
 
             else -> {}
 
@@ -512,6 +572,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         bitmapStack.clear()
         redoBitmapStack.clear()
         shapeView = null
+        mtextView = null
         path.reset()
         pushBitmap()
     }
@@ -545,6 +606,10 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         shapeView?.let {
             addShapeToBitmap()
         }
+        mtextView?.let {
+            addTextToBitmap()
+        }
+
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         draw(canvas)
@@ -614,9 +679,18 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
 
                 }
             }
+
             Tools.TEXT -> {
-                canvas?.drawText(text, touchX, touchY, textpaint)
-                pushBitmap()
+                if (mtextView == null || mtextView?.isInsideTouch(touchX, touchY) == false){
+                    if (mtextView != null){
+                        addTextToBitmap()
+                    }
+                    val w = paint.measureText(text)
+                    val h =  paint.fontMetrics.bottom - paint.fontMetrics.top
+                    mtextView = TextMoveView(context, null, textpaint, text, touchX - w , touchY - h )
+
+                }
+
             }
 
 
@@ -655,6 +729,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             }
 
 
+
+
             else -> {
 
             }
@@ -681,14 +757,10 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         bitmapStack.clear()
         redoBitmapStack.clear()
         shapeView = null
+        mtextView = null
         path.reset()
         pushBitmap()
     }
-
-
-
-
-
 
 
 }

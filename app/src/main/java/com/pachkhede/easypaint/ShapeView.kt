@@ -25,8 +25,8 @@ class ShapeView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     val shape: Tools,
     shapePaint: Paint,
-    private var x1: Float,
-    private var y1: Float,
+    var x1: Float,
+    var y1: Float,
     private var x2: Float,
     private var y2: Float,
 ) : View(context, attrs) {

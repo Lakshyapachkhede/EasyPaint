@@ -182,7 +182,7 @@ class MainActivity : AppCompatActivity() {
 
         drawingView.setOnTouchListener { _, event ->
 
-            if (event.action == MotionEvent.ACTION_MOVE) {
+            if (event.action == MotionEvent.ACTION_MOVE || event.action == MotionEvent.ACTION_DOWN) {
                 showImageAtTouch(event.x, event.y, img)
                 if (sideMenu.isVisible){
                     toggleMenu(false)
@@ -194,7 +194,6 @@ class MainActivity : AppCompatActivity() {
 
 
         colorIndicator.setOnClickListener {
-//            openColorPicker(false)
             val dialog =
                 ColorPickerDialog("Select Color",
                     ColorPickerDialog.paintColorsDefaultList, recentColors){ color ->
