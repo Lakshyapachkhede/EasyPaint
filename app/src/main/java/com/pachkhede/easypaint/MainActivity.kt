@@ -44,18 +44,17 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.pachkhede.easypaint.DrawingView.Tools
-import com.skydoves.colorpickerview.ColorEnvelope
-import com.skydoves.colorpickerview.ColorPickerDialog
-import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import android.util.Base64
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import androidx.core.graphics.toColorInt
 import androidx.core.widget.doAfterTextChanged
 import androidx.core.widget.doOnTextChanged
 import java.io.File
 import java.io.FileOutputStream
-
+import com.pachkhede.easypaint.ColorPickerDialog
 
 class MainActivity : AppCompatActivity() {
 
@@ -89,6 +88,9 @@ class MainActivity : AppCompatActivity() {
         Item("Lightning", R.drawable.lightning, DrawingView.Tools.LIGHTNING),
 
         )
+
+    private val recentColors =  MutableList<Int>(6) { "#FFFFFF".toColorInt() }
+
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -182,11 +184,30 @@ class MainActivity : AppCompatActivity() {
 
 
         colorIndicator.setOnClickListener {
-            openColorPicker(false)
+//            openColorPicker(false)
+            val dialog =
+                ColorPickerDialog("Select Color",
+                    ColorPickerDialog.paintColorsDefaultList, recentColors){ color ->
+                Toast.makeText(this@MainActivity, color.toString(), Toast.LENGTH_SHORT).show()
+                drawingView.changeColor(color)
+                colorIndicator.backgroundTintList =
+                    ColorStateList.valueOf(color)
+                addRecentColor(color)
+            }
+            dialog.show(supportFragmentManager, "Color Picker Main")
         }
 
         backColorIndicator.setOnClickListener {
-            openColorPicker(true)
+            val dialog =
+                ColorPickerDialog("Select Background Color",
+                    ColorPickerDialog.paintColorsDefaultList, recentColors){ color ->
+                Toast.makeText(this@MainActivity, color.toString(), Toast.LENGTH_SHORT).show()
+                drawingView.changeBackColor(color)
+                backColorIndicator.backgroundTintList =
+                    ColorStateList.valueOf(color)
+                addRecentColor(color)
+            }
+            dialog.show(supportFragmentManager, "Color Picker Background")
         }
 
         findViewById<LinearLayout>(R.id.undo).setOnClickListener {
@@ -301,37 +322,6 @@ class MainActivity : AppCompatActivity() {
 
         dialog.setContentView(view)
         dialog.show()
-
-    }
-
-    private fun openColorPicker(isBackground: Boolean) {
-        val title = if (isBackground) "Select Background Color" else "Select Color"
-
-        ColorPickerDialog.Builder(this)
-            .setTitle(title)
-            .setPreferenceName("MyColorPickerDialog")
-            .setPositiveButton("Select", object : ColorEnvelopeListener {
-                override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {
-                    envelope?.color?.let { selectedColor ->
-                        if (isBackground) {
-                            drawingView.changeBackColor(selectedColor)
-                            backColorIndicator.backgroundTintList =
-                                ColorStateList.valueOf(selectedColor)
-                        } else {
-                            drawingView.changeColor(selectedColor)
-                            colorIndicator.backgroundTintList =
-                                ColorStateList.valueOf(selectedColor)
-                        }
-                    }
-                }
-            })
-            .setNegativeButton("Cancel") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .attachAlphaSlideBar(true)
-            .attachBrightnessSlideBar(true)
-            .setBottomSpace(12)
-            .show()
 
     }
 
@@ -519,31 +509,31 @@ class MainActivity : AppCompatActivity() {
             demoTextView.setText(if (text.isNullOrEmpty()) "Your Text" else text)
         }
 
+        inputEditText.setOnEditorActionListener {v, actionId, event->
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO) {
+                val text = inputEditText.text.toString()
+                drawingView.text = if (text.trim() != "") text else drawingView.text
+                drawingView.changeTool(Tools.TEXT)
+                dialog.dismiss()
+                true
+            } else {
+                false
+            }
+        }
+
+
         textColor.setOnClickListener {
-            val title = "Select Color"
-
-            ColorPickerDialog.Builder(this)
-                .setTitle(title)
-                .setPreferenceName("MyColorPickerDialog")
-                .setPositiveButton("Select", object : ColorEnvelopeListener {
-                    override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {
-                        envelope?.color?.let { selectedColor ->
-                            demoTextView.setTextColor(selectedColor)
-                            drawingView.textpaint.color = selectedColor
-                            colorIndicator.backgroundTintList =
-                                ColorStateList.valueOf(selectedColor)
-                        }
-                    }
-                })
-                .setNegativeButton("Cancel") { dialog, _ ->
-                    dialog.dismiss()
+            val dialog =
+                ColorPickerDialog("Select Text Color",
+                    ColorPickerDialog.paintColorsDefaultList, recentColors){ color ->
+                    Toast.makeText(this@MainActivity, color.toString(), Toast.LENGTH_SHORT).show()
+                    demoTextView.setTextColor(color)
+                    drawingView.textpaint.color = color
+                    colorIndicator.backgroundTintList =
+                        ColorStateList.valueOf(color)
+                    addRecentColor(color)
                 }
-                .attachAlphaSlideBar(true)
-                .attachBrightnessSlideBar(true)
-                .setBottomSpace(12)
-                .show()
-
-
+            dialog.show(supportFragmentManager, "Color Picker Text")
         }
 
         dialog.setContentView(view)
@@ -568,6 +558,13 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+
+    fun addRecentColor(color: Int) {
+        if (recentColors.size >= 6) {
+            recentColors.removeAt(recentColors.lastIndex)
+        }
+        recentColors.add(0, color)
+    }
 
 
 
