@@ -57,6 +57,7 @@ import java.io.File
 import java.io.FileOutputStream
 import com.pachkhede.easypaint.ColorPickerDialog
 import androidx.core.view.isGone
+import androidx.core.view.isVisible
 
 class MainActivity : AppCompatActivity() {
 
@@ -183,6 +184,9 @@ class MainActivity : AppCompatActivity() {
 
             if (event.action == MotionEvent.ACTION_MOVE) {
                 showImageAtTouch(event.x, event.y, img)
+                if (sideMenu.isVisible){
+                    toggleMenu(false)
+                }
             }
 
             false
@@ -226,8 +230,8 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun toggleMenu() {
-        if (sideMenu.isGone) {
+    private fun toggleMenu(isEnable: Boolean = true) {
+        if (sideMenu.isGone && isEnable) {
             val animation: Animation =
                 AnimationUtils.loadAnimation(baseContext, R.anim.side_menu_open)
             sideMenu.visibility = View.VISIBLE
