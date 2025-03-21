@@ -49,12 +49,14 @@ import java.io.IOException
 import android.util.Base64
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import androidx.core.content.FileProvider
 import androidx.core.graphics.toColorInt
 import androidx.core.widget.doAfterTextChanged
 import androidx.core.widget.doOnTextChanged
 import java.io.File
 import java.io.FileOutputStream
 import com.pachkhede.easypaint.ColorPickerDialog
+import androidx.core.view.isGone
 
 class MainActivity : AppCompatActivity() {
 
@@ -159,6 +161,10 @@ class MainActivity : AppCompatActivity() {
             saveDrawing()
         }
 
+        findViewById<ImageView>(R.id.share).setOnClickListener {
+            shareDrawing()
+        }
+
         findViewById<ImageView>(R.id.image).setOnClickListener {
             openGallery()
         }
@@ -221,7 +227,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun toggleMenu() {
-        if (sideMenu.visibility == View.GONE) {
+        if (sideMenu.isGone) {
             val animation: Animation =
                 AnimationUtils.loadAnimation(baseContext, R.anim.side_menu_open)
             sideMenu.visibility = View.VISIBLE
@@ -432,6 +438,7 @@ class MainActivity : AppCompatActivity() {
             if (bitmap != null) {
                 drawingView.setBackgroundImage(bitmap)
             } else {
+
             }
         }
     }
@@ -567,7 +574,35 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    private fun shareDrawing() {
+        val bitmap = drawingView.getBitmap()
 
+        try {
+
+            val file = File(cacheDir, "shared_image.png")
+            val fos = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+            fos.flush()
+            fos.close()
+
+            // Get URI from file provider
+            val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+
+            // Create Share Intent
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                putExtra(Intent.EXTRA_STREAM, uri)
+                type = "image/png"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+
+            startActivity(Intent.createChooser(shareIntent, "Share Drawing"))
+
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(this, "Failed to share image", Toast.LENGTH_SHORT).show()
+        }
+    }
 }
 
 
