@@ -16,7 +16,6 @@ import android.graphics.PorterDuffColorFilter
 import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
-import android.widget.Toast
 import com.pachkhede.easypaint.DrawingView.Tools
 import kotlin.random.Random
 

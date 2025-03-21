@@ -105,7 +105,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         isAntiAlias = true
     }
 
-    var text = ""
+    var text = "Your Text"
 
     var isDrawingText = false
 
@@ -203,13 +203,14 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             val distanceX = (touchX - prevTouchX)
             val distanceY = (touchY - prevTouchY)
 
-            if (it.isInsideTouch(touchX, touchY) == true){
-
-
+            if (it.isInsideTouch(touchX, touchY) == true) {
                 it.setPosition(it.x1 + distanceX, it.y1 + distanceY)
                 prevTouchX = touchX
                 prevTouchY = touchY
             }
+
+
+
         }
 
 
@@ -565,6 +566,12 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         invalidate()
     }
 
+    fun changeTextSize(size: Float) {
+        textpaint.textSize = size
+        mtextView?.update()
+        invalidate()
+    }
+
     fun clearCanvas() {
         bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         canvas = Canvas(bitmap!!)
@@ -719,6 +726,8 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     private fun touchUp(touchX: Float, touchY: Float) {
+        prevTouchX = 0f
+        prevTouchY = 0f
         when (tool) {
             Tools.SOLID_BRUSH, Tools.ERASER, Tools.OIL_BRUSH, Tools.CALLIGRAPHY_BRUSH,
             Tools.DASHED_BRUSH, Tools.NEON_BRUSH, Tools.SPRAY_BRUSH, Tools.SPRAY_BRUSH_CAN,

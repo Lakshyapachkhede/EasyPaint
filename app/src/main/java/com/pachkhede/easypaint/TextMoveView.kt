@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
 import android.view.View
+import kotlin.math.abs
 import kotlin.ranges.rangeTo
 
 
@@ -31,8 +32,8 @@ class TextMoveView @JvmOverloads constructor(
     }
 
     private var borderPath = Path()
-    val w = paint.measureText(text)
-    val h =  paint.fontMetrics.bottom - paint.fontMetrics.top
+    var w = paint.measureText(text)
+    var h =  paint.fontMetrics.bottom - paint.fontMetrics.top
 
 
     var x2 = x1 + w
@@ -87,8 +88,11 @@ class TextMoveView @JvmOverloads constructor(
 
     fun isInsideTouch(touchX: Float, touchY: Float) : Boolean{
         return (touchX in x1..x2 && touchY in y1..y2 )
-
     }
+
+
+
+
 
     fun setPosition(x: Float, y: Float) {
         x1 = x
@@ -96,9 +100,15 @@ class TextMoveView @JvmOverloads constructor(
         x2 = x + w
         y2 = y + h
         invalidate()
-
-
     }
 
+
+    fun update(){
+        w = paint.measureText(text)
+        h =  paint.fontMetrics.bottom - paint.fontMetrics.top
+        x2 = x1 + w
+        y2 = y1 + h
+        invalidate()
+    }
 
 }

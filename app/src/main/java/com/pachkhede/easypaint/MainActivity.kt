@@ -95,8 +95,7 @@ class MainActivity : AppCompatActivity() {
 
         )
 
-    private val recentColors =  MutableList<Int>(6) { "#FFFFFF".toColorInt() }
-
+    private val recentColors = MutableList<Int>(6) { "#FFFFFF".toColorInt() }
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -165,7 +164,6 @@ class MainActivity : AppCompatActivity() {
                 .show()
 
 
-
         }
 
         findViewById<ImageView>(R.id.text).setOnClickListener {
@@ -187,7 +185,11 @@ class MainActivity : AppCompatActivity() {
         findViewById<ImageView>(R.id.info).setOnClickListener {
             AlertDialog.Builder(this)
                 .setTitle("Information")
-                .setMessage("Icons Provided by Flaticon\n visit https://www.flaticon.com/\n\nApp Created by Lakshya Pachkhede (https://lakshyapachkhede.github.io/Lakshyapachkhede/)")
+                .setMessage("App Created by Lakshya Pachkhede (https://lakshyapachkhede.github.io/Lakshyapachkhede/)\n\n" +
+                        "Icon made by Freepik from www.flaticon.com (Art, Paint Bucket, Thickness, Pencil, Eraser, Shapes, Image)\n\n" +
+                        "Icon made by imaginationlol from www.flaticon.com (Clean)\n\n" +
+                        "Icon made by IconKanan from www.flaticon.com (Text)  \n\n" +
+                        "Icon made by Aldo Cervantes from www.flaticon.com (Save)  ")
                 .setPositiveButton("OK", null)
                 .show()
         }
@@ -208,7 +210,7 @@ class MainActivity : AppCompatActivity() {
 
             if (event.action == MotionEvent.ACTION_MOVE || event.action == MotionEvent.ACTION_DOWN) {
                 showImageAtTouch(event.x, event.y, img)
-                if (sideMenu.isVisible){
+                if (sideMenu.isVisible) {
                     toggleMenu(false)
                 }
             }
@@ -219,27 +221,31 @@ class MainActivity : AppCompatActivity() {
 
         colorIndicator.setOnClickListener {
             val dialog =
-                ColorPickerDialog("Select Color",
-                    ColorPickerDialog.paintColorsDefaultList, recentColors){ color ->
-                Toast.makeText(this@MainActivity, color.toString(), Toast.LENGTH_SHORT).show()
-                drawingView.changeColor(color)
-                colorIndicator.backgroundTintList =
-                    ColorStateList.valueOf(color)
-                addRecentColor(color)
-            }
+                ColorPickerDialog(
+                    "Select Color",
+                    ColorPickerDialog.paintColorsDefaultList, recentColors
+                ) { color ->
+
+                    drawingView.changeColor(color)
+                    colorIndicator.backgroundTintList =
+                        ColorStateList.valueOf(color)
+                    addRecentColor(color)
+                }
             dialog.show(supportFragmentManager, "Color Picker Main")
         }
 
         backColorIndicator.setOnClickListener {
             val dialog =
-                ColorPickerDialog("Select Background Color",
-                    ColorPickerDialog.paintColorsDefaultList, recentColors){ color ->
-                Toast.makeText(this@MainActivity, color.toString(), Toast.LENGTH_SHORT).show()
-                drawingView.changeBackColor(color)
-                backColorIndicator.backgroundTintList =
-                    ColorStateList.valueOf(color)
-                addRecentColor(color)
-            }
+                ColorPickerDialog(
+                    "Select Background Color",
+                    ColorPickerDialog.paintColorsDefaultList, recentColors
+                ) { color ->
+
+                    drawingView.changeBackColor(color)
+                    backColorIndicator.backgroundTintList =
+                        ColorStateList.valueOf(color)
+                    addRecentColor(color)
+                }
             dialog.show(supportFragmentManager, "Color Picker Background")
         }
 
@@ -477,6 +483,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+
     private fun saveDrawingToFile() {
 
         val file = File(filesDir, getString(R.string.saved_bitmap)) // Internal storage path
@@ -497,6 +504,10 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun openTextDialog() {
+
+        img = R.drawable.pen
+        imgView.setImageResource(img)
+
         val dialog = BottomSheetDialog(this)
         val view = LayoutInflater.from(this).inflate(R.layout.add_text_dialog, null)
 
@@ -511,8 +522,9 @@ class MainActivity : AppCompatActivity() {
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 progressTv.text = p1.toString()
-                drawingView.textpaint.textSize = p1.toFloat()
+                drawingView.changeTextSize(p1.toFloat())
                 demoTextView.textSize = pxToSp(p1.toFloat(), this@MainActivity)
+
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
@@ -537,14 +549,16 @@ class MainActivity : AppCompatActivity() {
         dialog.setOnDismissListener {
             val text = inputEditText.text.toString()
             drawingView.text = if (text.trim() != "") text else drawingView.text
-            drawingView.changeTool(Tools.TEXT)
+            if (drawingView.tool != Tools.TEXT) {
+                drawingView.changeTool(Tools.TEXT)
+            }
         }
 
         inputEditText.doAfterTextChanged { text ->
             demoTextView.setText(if (text.isNullOrEmpty()) "Your Text" else text)
         }
 
-        inputEditText.setOnEditorActionListener {v, actionId, event->
+        inputEditText.setOnEditorActionListener { v, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO) {
                 val text = inputEditText.text.toString()
                 drawingView.text = if (text.trim() != "") text else drawingView.text
@@ -559,9 +573,10 @@ class MainActivity : AppCompatActivity() {
 
         textColor.setOnClickListener {
             val dialog =
-                ColorPickerDialog("Select Text Color",
-                    ColorPickerDialog.paintColorsDefaultList, recentColors){ color ->
-                    Toast.makeText(this@MainActivity, color.toString(), Toast.LENGTH_SHORT).show()
+                ColorPickerDialog(
+                    "Select Text Color",
+                    ColorPickerDialog.paintColorsDefaultList, recentColors
+                ) { color ->
                     demoTextView.setTextColor(color)
                     drawingView.textpaint.color = color
                     colorIndicator.backgroundTintList =
@@ -574,7 +589,7 @@ class MainActivity : AppCompatActivity() {
         dialog.setContentView(view)
         dialog.findViewById<EditText>(R.id.add_text_input)?.setText(drawingView.text)
         demoTextView.setText(if (drawingView.text.isNullOrEmpty()) "Your Text" else drawingView.text)
-        seekBar.progress = drawingView.currStrokeWidth.toInt()
+        seekBar.progress = drawingView.textpaint.textSize.toInt()
         progressTv.text = drawingView.currStrokeWidth.toInt().toString()
         demoTextView.setTextColor(drawingView.textpaint.color)
         demoTextView.textSize = pxToSp(drawingView.textpaint.textSize, this@MainActivity)
@@ -591,7 +606,6 @@ class MainActivity : AppCompatActivity() {
     fun pxToSp(px: Float, context: Context): Float {
         return px / context.resources.displayMetrics.scaledDensity
     }
-
 
 
     fun addRecentColor(color: Int) {
@@ -633,8 +647,8 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun handleIncomingImage(intent: Intent?){
-        if(intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("image/") == true){
+    private fun handleIncomingImage(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("image/") == true) {
             val imageUri: Uri? = intent.getParcelableExtra(Intent.EXTRA_STREAM)
             if (imageUri != null) {
                 drawingView.post {

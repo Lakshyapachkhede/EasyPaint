@@ -1,0 +1,17 @@
+<a href="https://www.flaticon.com/free-icons/art" title="art icons">Art icons created by Freepik - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/paint-bucket" title="paint bucket icons">Paint bucket icons created by Freepik - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/thickness" title="thickness icons">Thickness icons created by Freepik - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/pencil" title="pencil icons">Pencil icons created by Freepik - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/eraser" title="eraser icons">Eraser icons created by Freepik - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/shapes" title="shapes icons">Shapes icons created by Freepik - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/clean" title="clean icons">Clean icons created by imaginationlol - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/text" title="text icons">Text icons created by IconKanan - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/save" title="save icons">Save icons created by Aldo Cervantes - Flaticon</a>
+<a href="https://www.flaticon.com/free-icons/image" title="image icons">Image icons created by Freepik - Flaticon</a>
+
+
+
+"Icon made by Freepik from www.flaticon.com (Art, Paint Bucket, Thickness, Pencil, Eraser, Shapes, Image)\"
+"Icon made by imaginationlol from www.flaticon.com (Clean)\n\n" +
+"Icon made by IconKanan from www.flaticon.com (Text)  \n\n" +
+"Icon made by Aldo Cervantes from www.flaticon.com (Save)  ")

@@ -39,7 +39,7 @@ class ShapeView @JvmOverloads constructor(
 
     private val touchMargin = 30f
 
-    var paint: Paint = shapePaint
+    var paint: Paint = shapePaint.apply { isAntiAlias = false }
     var path = Path()
 
     private var borderPaint = Paint().apply {
@@ -520,9 +520,9 @@ class ShapeView @JvmOverloads constructor(
         canvas.save()
         updatePath()
         drawBorder()
+        canvas.drawPath(path, paint)
         drawBorderCircles(canvas)
         canvas.drawPath(borderPath, borderPaint)
-        canvas.drawPath(path, paint)
         canvas.restore()
     }
 
