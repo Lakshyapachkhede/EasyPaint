@@ -49,6 +49,7 @@ import java.io.IOException
 import android.util.Base64
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.core.graphics.toColorInt
 import androidx.core.widget.doAfterTextChanged
@@ -68,6 +69,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mainView: ConstraintLayout
     private lateinit var imgView: ImageView
     private var img: Int = R.drawable.pen
+    var incomingImage = false
+
     val shapes = listOf(
 
         Item("Line", R.drawable.line, DrawingView.Tools.LINE),
@@ -117,6 +120,7 @@ class MainActivity : AppCompatActivity() {
         mainView = findViewById<ConstraintLayout>(R.id.main)
         imgView = ImageView(this)
 
+        handleIncomingImage(intent)
 
         findViewById<LinearLayout>(R.id.menuBtn).setOnClickListener {
             toggleMenu()
@@ -151,7 +155,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<ImageView>(R.id.clear).setOnClickListener {
-            drawingView.clearCanvas()
+            AlertDialog.Builder(this)
+                .setTitle("Clear Drawing?")
+                .setMessage("Are you sure you want to delete all? This action cannot be undone, and all progress will be lost.")
+                .setPositiveButton("Yes, Clear") { _, _ ->
+                    drawingView.clearCanvas()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+
+
+
         }
 
         findViewById<ImageView>(R.id.text).setOnClickListener {
@@ -170,6 +184,14 @@ class MainActivity : AppCompatActivity() {
             openGallery()
         }
 
+        findViewById<ImageView>(R.id.info).setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Information")
+                .setMessage("Icons Provided by Flaticon\n visit https://www.flaticon.com/\n\nApp Created by Lakshya Pachkhede (https://lakshyapachkhede.github.io/Lakshyapachkhede/)")
+                .setPositiveButton("OK", null)
+                .show()
+        }
+
         findViewById<ImageView>(R.id.shapes).setOnClickListener {
             val bottomSheet = ItemBottomSheet(shapes, "Select Shape") { selectedShape ->
                 drawingView.changeTool(selectedShape.tool)
@@ -179,6 +201,8 @@ class MainActivity : AppCompatActivity() {
             }
             bottomSheet.show(supportFragmentManager, "ShapesBottomSheet")
         }
+
+
 
         drawingView.setOnTouchListener { _, event ->
 
@@ -438,7 +462,8 @@ class MainActivity : AppCompatActivity() {
 
         drawingView.post {
             val bitmap = loadDrawingFromFile()
-            if (bitmap != null) {
+            if (bitmap != null && incomingImage == false) {
+
                 drawingView.setBackgroundImage(bitmap)
             } else {
 
@@ -606,6 +631,26 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Failed to share image", Toast.LENGTH_SHORT).show()
         }
     }
+
+
+    private fun handleIncomingImage(intent: Intent?){
+        if(intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("image/") == true){
+            val imageUri: Uri? = intent.getParcelableExtra(Intent.EXTRA_STREAM)
+            if (imageUri != null) {
+                drawingView.post {
+                    drawingView.setBackgroundImage(uriToBitmap(imageUri))
+                    incomingImage = true
+                }
+            }
+        }
+    }
+
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIncomingImage(intent)
+    }
+
 }
 
 
