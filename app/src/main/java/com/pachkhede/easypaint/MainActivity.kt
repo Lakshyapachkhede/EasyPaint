@@ -59,6 +59,14 @@ import java.io.FileOutputStream
 import com.pachkhede.easypaint.ColorPickerDialog
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -109,6 +117,16 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        val adView = findViewById<AdView>(R.id.banner_ad)
+
+        val backgroundScope = CoroutineScope(Dispatchers.IO)
+        backgroundScope.launch {
+
+            MobileAds.initialize(this@MainActivity) {}
+        }
+
+        val adRequest = AdRequest.Builder().build()
+        adView.loadAd(adRequest)
 
 
 
@@ -448,6 +466,7 @@ class MainActivity : AppCompatActivity() {
                 val imageUri: Uri? = data?.data
                 if (imageUri != null) {
                     val bitmap = uriToBitmap(imageUri)
+                    incomingImage = true
                     drawingView.setBackgroundImage(bitmap)
                 }
 
