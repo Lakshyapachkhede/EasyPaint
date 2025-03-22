@@ -16,25 +16,19 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.os.PersistableBundle
 import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import android.widget.ArrayAdapter
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ListView
 import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -44,25 +38,19 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.pachkhede.easypaint.DrawingView.Tools
-import java.io.ByteArrayOutputStream
 import java.io.IOException
-import android.util.Base64
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.core.graphics.toColorInt
 import androidx.core.widget.doAfterTextChanged
-import androidx.core.widget.doOnTextChanged
 import java.io.File
 import java.io.FileOutputStream
-import com.pachkhede.easypaint.ColorPickerDialog
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
-import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -340,16 +328,16 @@ class MainActivity : AppCompatActivity() {
         val recyclerView = view.findViewById<RecyclerView>(R.id.brushRecyclerView)
 
         val items = listOf(
-            BrushItem("solid", DrawingView.Tools.SOLID_BRUSH),
-            BrushItem("calligraphy", DrawingView.Tools.CALLIGRAPHY_BRUSH),
-            BrushItem("crayon", DrawingView.Tools.CRAYON_BRUSH),
-            BrushItem("spray", DrawingView.Tools.SPRAY_BRUSH),
-            BrushItem("air spray", DrawingView.Tools.SPRAY_BRUSH_CAN),
-            BrushItem("dotted", DrawingView.Tools.DASHED_BRUSH),
-            BrushItem("neon", DrawingView.Tools.NEON_BRUSH),
+            BrushItem("Solid", DrawingView.Tools.SOLID_BRUSH),
+            BrushItem("Calligraphy", DrawingView.Tools.CALLIGRAPHY_BRUSH),
+            BrushItem("Crayon", DrawingView.Tools.CRAYON_BRUSH),
+            BrushItem("Spray", DrawingView.Tools.SPRAY_BRUSH),
+            BrushItem("Air Spray", DrawingView.Tools.SPRAY_BRUSH_CAN),
+            BrushItem("Dashed", DrawingView.Tools.DASHED_BRUSH),
+            BrushItem("Neon", DrawingView.Tools.NEON_BRUSH),
             BrushItem("Marker", DrawingView.Tools.MARKER_BRUSH),
-            BrushItem("blur", DrawingView.Tools.BLUR_BRUSH),
-            BrushItem("oil", DrawingView.Tools.OIL_BRUSH),
+            BrushItem("Blur", DrawingView.Tools.BLUR_BRUSH),
+            BrushItem("Oil", DrawingView.Tools.OIL_BRUSH),
 
 
             )
@@ -407,7 +395,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val drawingView = findViewById<DrawingView>(R.id.drawingView)
         val bitmap = drawingView.getBitmap()
         val filename = "EasyPaint_${System.currentTimeMillis()}.png"
 
@@ -430,10 +417,16 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
-                Toast.makeText(this, "Failed to save drawing", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to save drawing 1", Toast.LENGTH_SHORT).show()
             }
         } ?: run {
-            Toast.makeText(this, "Failed to save drawing", Toast.LENGTH_SHORT).show()
+
+            val file = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), filename)
+            FileOutputStream(file).use { fos ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+            }
+
+            Toast.makeText(this, "file saved to ${file.absolutePath}", Toast.LENGTH_SHORT).show()
         }
     }
 

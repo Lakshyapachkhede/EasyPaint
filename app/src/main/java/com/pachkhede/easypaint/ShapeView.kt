@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.Point
 import android.util.AttributeSet
 import android.view.View
 import com.pachkhede.easypaint.DrawingView.Tools

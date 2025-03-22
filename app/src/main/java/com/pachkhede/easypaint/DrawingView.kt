@@ -29,8 +29,6 @@ import java.util.Deque
 import java.util.LinkedList
 import java.util.Stack
 import androidx.core.graphics.get
-import kotlin.math.abs
-
 
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 

@@ -8,7 +8,6 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
 import android.view.View
-import kotlin.math.abs
 import kotlin.ranges.rangeTo
 
 
